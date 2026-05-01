@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SpendSnitch — Leaderboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --beige:#f7f3ec;--beige2:#ede7da;--beige3:#ddd4c4;
+  --green:#2d5a3d;--green2:#3d7a52;--green3:#5a9e6e;
+  --gl:#e8f2eb;--gm:#c2dbc9;
+  --text:#1a2418;--t2:#4a5e4f;--t3:#8a9e8f;
+  --accent:#e8a04a;--red:#c0443a;
+}
+body{font-family:'Outfit',sans-serif;background:var(--beige);color:var(--text);min-height:100vh;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(247,243,236,0.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--beige3);height:68px;padding:0 5%;display:flex;align-items:center;justify-content:space-between;}
+.logo{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--green);}
+.logo span{color:var(--accent);font-style:italic;}
+.nav-links{display:flex;list-style:none;}
+.nav-links li a{text-decoration:none;color:var(--t2);font-size:15px;padding:8px 16px;border-radius:8px;transition:all .2s;}
+.nav-links li a:hover{color:var(--green);background:var(--gl);}
+.nav-links li a.active{color:#fff;background:var(--green);font-weight:500;}
+
+.page{max-width:1440px;margin:0 auto;padding:88px 5% 60px;display:grid;grid-template-columns:1fr 400px;gap:32px;align-items:start;}
+
+/* ── LEADERBOARD LEFT ── */
+.lb-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:16px;flex-wrap:wrap;}
+.lb-title{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;color:var(--text);letter-spacing:-.5px;}
+.lb-title em{font-style:italic;color:var(--green);}
+.date-range{font-size:13px;color:var(--t3);margin-top:5px;}
+.week-tabs{display:flex;gap:4px;background:var(--beige2);padding:4px;border-radius:12px;align-self:flex-start;}
+.week-tab{padding:8px 18px;border-radius:9px;font-size:14px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--t3);font-family:'Outfit',sans-serif;transition:all .15s;}
+.week-tab.active{background:#fff;color:var(--green);box-shadow:0 1px 4px rgba(0,0,0,.08);}
+
+/* podium */
+.podium-wrap{background:#fff;border:1px solid var(--beige2);border-radius:24px;padding:36px 32px 28px;margin-bottom:20px;}
+.podium-inner{display:flex;align-items:flex-end;justify-content:center;gap:20px;}
+.pod-item{display:flex;flex-direction:column;align-items:center;}
+.pod-av{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;border:3px solid var(--beige3);margin-bottom:8px;position:relative;flex-shrink:0;}
+.pod-av.p1{width:70px;height:70px;font-size:18px;}
+.pod-crown{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:20px;}
+.pod-name{font-size:13px;font-weight:600;color:var(--text);text-align:center;margin-bottom:2px;}
+.pod-pts{font-size:12px;color:var(--t3);margin-bottom:10px;font-weight:500;}
+.pod-bar{border-radius:14px 14px 8px 8px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--green);width:96px;border:1px solid var(--gm);transition:height .5s ease;}
+.pod-bar.p1{background:linear-gradient(180deg,#c2dbc9,#e8f2eb);}
+.pod-bar.p2{background:linear-gradient(180deg,#d5e6da,#eef5f0);}
+.pod-bar.p3{background:linear-gradient(180deg,#e0ece4,#f4f9f5);}
+
+/* lb rows */
+.lb-list{display:flex;flex-direction:column;gap:10px;}
+.lb-row{background:#fff;border:1px solid var(--beige2);border-radius:16px;padding:14px 20px;display:flex;align-items:center;gap:14px;transition:transform .15s,border-color .15s,background .4s,order .5s;}
+.lb-row:hover{transform:translateX(4px);border-color:var(--gm);}
+.lb-row.me-row{background:var(--gl);border-color:var(--gm);}
+.lb-row.snitched-row{background:#fff8f7;border-color:#f5c4be;}
+.row-rank{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;width:34px;text-align:center;flex-shrink:0;transition:color .3s;}
+.r1{color:#c8960a;}.r2{color:#8a9a8a;}.r3{color:#a07840;}.rn{color:var(--beige3);}
+.row-av{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;}
+.row-info{flex:1;min-width:0;}
+.row-name{font-size:16px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.row-sub{font-size:12px;color:var(--t3);margin-top:3px;}
+.pill{font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px;white-space:nowrap;}
+.pill-you{background:var(--gl);color:var(--green);border:1px solid var(--gm);}
+.pill-snitch{background:#fde8e4;color:var(--red);border:1px solid #f5c4be;}
+.row-score{text-align:right;flex-shrink:0;}
+.row-pts{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--green);transition:color .3s;}
+.row-pts.pts-red{color:var(--red);}
+.row-change{font-size:12px;color:var(--t3);margin-top:2px;}
+.chg-up{color:var(--green3);}.chg-dn{color:var(--red);}
+
+/* ── FEED RIGHT ── */
+.feed-panel{position:sticky;top:88px;}
+.feed-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.feed-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--text);}
+.live-dot{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--green3);font-weight:500;}
+.live-dot::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--green3);animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.feed-scroll{max-height:calc(100vh - 190px);overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding-right:4px;}
+.feed-scroll::-webkit-scrollbar{width:4px;}
+.feed-scroll::-webkit-scrollbar-thumb{background:var(--beige3);border-radius:4px;}
+
+.feed-card{background:#fff;border:1px solid var(--beige2);border-radius:18px;padding:16px 18px;transition:border-color .15s;animation:slideIn .35s ease;}
+@keyframes slideIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+.feed-card:hover{border-color:var(--gm);}
+.feed-card.snitch-fc{border-color:#f5c4be;background:#fff8f7;}
+.fc-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;}
+.fc-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;}
+.fc-meta{flex:1;}
+.fc-name{font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.fc-time{font-size:11px;color:var(--t3);margin-top:1px;}
+.fc-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px;}
+.badge-snitch{background:#fde8e4;color:var(--red);border:1px solid #f5c4be;}
+.badge-streak{background:#fef3d0;color:#8a6a00;border:1px solid #f5d060;}
+.badge-goal{background:var(--gl);color:var(--green);border:1px solid var(--gm);}
+.badge-clean{background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;}
+.fc-body{font-size:13px;color:var(--text);line-height:1.6;margin-bottom:8px;}
+.fc-note{font-size:12px;color:var(--t3);background:var(--beige);border-radius:8px;padding:6px 10px;margin-bottom:10px;line-height:1.5;border-left:3px solid var(--beige3);}
+.fc-amount{display:inline-block;background:var(--beige2);border-radius:8px;padding:5px 12px;font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--red);margin-bottom:10px;}
+.fc-amount.green{color:var(--green);}
+.fc-actions{display:flex;align-items:center;gap:8px;border-top:1px solid var(--beige2);padding-top:10px;}
+.fc-btn{display:flex;align-items:center;gap:5px;background:var(--beige);border:1px solid var(--beige3);border-radius:100px;padding:6px 13px;font-size:13px;font-weight:500;color:var(--t2);cursor:pointer;font-family:'Outfit',sans-serif;transition:all .15s;user-select:none;}
+.fc-btn:hover{background:var(--beige2);}
+.fc-btn.liked{background:#fde8e4;border-color:#f5c4be;color:var(--red);}
+.fc-btn.disliked{background:var(--gl);border-color:var(--gm);color:var(--green);}
+.fc-btn svg{width:14px;height:14px;flex-shrink:0;}
+.fc-pts-change{margin-left:auto;font-size:12px;font-weight:600;}
+.pts-down{color:var(--red);}.pts-up{color:var(--green3);}
+
+/* ── PUNISHMENT SECTION ── */
+.pun-section{max-width:1440px;margin:0 auto;padding:0 5% 80px;}
+.pun-header{margin-bottom:20px;}
+.pun-title{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.pun-title em{font-style:italic;color:var(--red);}
+.pun-sub{font-size:15px;color:var(--t2);font-weight:300;margin-bottom:24px;}
+
+/* Player group section */
+.pun-player-group{margin-bottom:40px;}
+.pun-player-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--beige2);}
+.pun-player-av{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;flex-shrink:0;}
+.pun-player-info{flex:1;}
+.pun-player-name{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--red);}
+.pun-player-offense{font-size:13px;color:var(--t3);margin-top:2px;}
+.pun-player-count{text-align:right;}
+.pun-player-count-num{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--red);}
+.pun-player-count-label{font-size:10px;color:var(--t3);}
+
+.pun-options{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+.pun-card{background:#fff;border:1px solid var(--beige2);border-radius:18px;padding:22px 24px;display:flex;flex-direction:column;gap:12px;transition:all .2s;cursor:pointer;}
+.pun-card:hover{border-color:var(--gm);transform:translateY(-2px);}
+.pun-card.voted{background:var(--gl);border-color:var(--gm);}
+.pun-card.winning{border-color:#f5c4be;background:#fff8f7;}
+.pun-icon{width:52px;height:52px;border-radius:14px;background:var(--beige2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:28px;}
+.pun-label{font-size:14px;font-weight:600;color:var(--text);line-height:1.4;}
+.pun-bar-wrap{background:var(--beige2);border-radius:100px;height:6px;overflow:hidden;}
+.pun-bar-fill{height:100%;background:var(--red);border-radius:100px;transition:width .4s ease;}
+.pun-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.pun-vote-count{font-size:12px;color:var(--t3);}
+.winning-tag{font-size:10px;font-weight:600;color:var(--red);background:#fde8e4;border:1px solid #f5c4be;padding:2px 8px;border-radius:100px;}
+.pun-vote-btn{background:var(--beige);border:1px solid var(--beige3);border-radius:100px;padding:8px 16px;font-size:13px;font-weight:500;color:var(--t2);cursor:pointer;font-family:'Outfit',sans-serif;transition:all .15s;width:100%;}
+.pun-vote-btn:hover{background:var(--beige2);}
+.pun-vote-btn.voted-btn{background:#fde8e4;border-color:#f5c4be;color:var(--red);}
+
+.loading{text-align:center;padding:40px;color:var(--t3);font-size:15px;}
+.section-divider{max-width:1440px;margin:40px auto 0;padding:0 5%;border-top:1px solid var(--beige2);}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Spend<span>Snitch</span></div>
+  <ul class="nav-links">
+    <li><a href="/" id="nav-home">Home</a></li>
+    <li><a href="/leaderboard" id="nav-lb" class="active">Leaderboard / Streak</a></li>
+    <li><a href="/" id="nav-insights">Spending Insights</a></li>
+    <li><a href="/" id="nav-budget">Budget</a></li>
+    <li><a href="/" id="nav-settings">Settings</a></li>
+  </ul>
+</nav>
+
+<div class="page">
+  <div>
+    <div class="lb-header">
+      <div>
+        <div class="lb-title" id="lb-title">This week's <em>board</em></div>
+        <div class="date-range" id="date-range">Loading...</div>
+      </div>
+      <div class="week-tabs">
+        <button class="week-tab active" onclick="setPeriod('week',this)">This week</button>
+        <button class="week-tab" onclick="setPeriod('month',this)">Month</button>
+        <button class="week-tab" onclick="setPeriod('alltime',this)">All time</button>
+      </div>
+    </div>
+    <div class="podium-wrap">
+      <div class="podium-inner" id="podium"><div class="loading">Loading...</div></div>
+    </div>
+    <div class="lb-list" id="lb-list"><div class="loading">Loading...</div></div>
+  </div>
+
+  <div class="feed-panel">
+    <div class="feed-header">
+      <div class="feed-title">Activity feed</div>
+      <div class="live-dot">Live</div>
+    </div>
+    <div class="feed-scroll" id="feed"><div class="loading">Loading...</div></div>
+  </div>
+</div>
+
+<div class="section-divider"></div>
+
+<div class="pun-section" style="padding-top:40px;">
+  <div class="pun-header">
+    <div class="pun-title">Vote the <em>punishment</em></div>
+    <div class="pun-sub">The top 3 most snitched players face their punishments. Vote on which embarrassing fate they deserve.</div>
+  </div>
+  <div id="pun-container"><div class="loading">Loading...</div></div>
+</div>
+
+<script>
+let currentPeriod = 'week';
+
+function timeAgo(ts){
+  const d = (Date.now()-new Date(ts).getTime())/1000;
+  if(d<60) return 'just now';
+  if(d<3600) return Math.floor(d/60)+' min ago';
+  if(d<86400) return Math.floor(d/3600)+' hr ago';
+  return Math.floor(d/86400)+'d ago';
+}
+
+function rankClass(r){ return r===1?'r1':r===2?'r2':r===3?'r3':'rn'; }
+
+/* ── LEADERBOARD ── */
+function renderPodium(rows){
+  const top3 = rows.filter(r=>r.rank<=3).sort((a,b)=>a.rank-b.rank);
+  const order = [top3[1],top3[0],top3[2]].filter(Boolean);
+  const heights = {1:130,2:102,3:80};
+  const pc = {1:'p1',2:'p2',3:'p3'};
+  return order.map(p=>`
+    <div class="pod-item">
+      <div class="pod-av ${pc[p.rank]}" style="background:${p.bg};color:${p.fg};border-color:${p.rank==1?'var(--accent)':p.bg};">
+        ${p.initials}${p.rank==1?'<div class="pod-crown">&#x1F451;</div>':''}
+      </div>
+      <div class="pod-name">${p.name}</div>
+      <div class="pod-pts">${p.score.toLocaleString()} pts</div>
+      <div class="pod-bar ${pc[p.rank]}" style="height:${heights[p.rank]}px">${p.rank}</div>
+    </div>`).join('');
+}
+
+function renderList(rows){
+  return rows.filter(r=>r.rank>3).map(p=>{
+    const chg = p.change!=null
+      ? `<span class="${p.change>=0?'chg-up':'chg-dn'}">${p.change>0?'+':''}${p.change} today</span>`
+      : '';
+    const pills = [
+      p.is_me?'<span class="pill pill-you">YOU</span>':'',
+      p.snitch_count>0?`<span class="pill pill-snitch">SNITCHED x${p.snitch_count}</span>`:'',
+    ].filter(Boolean).join('');
+    const redScore = p.score < 1035 && currentPeriod==='week';
+    return `
+    <div class="lb-row ${p.is_me?'me-row':p.snitched?'snitched-row':''}" id="lbrow-${p.id}">
+      <div class="row-rank ${rankClass(p.rank)}">${p.rank}</div>
+      <div class="row-av" style="background:${p.bg};color:${p.fg};">${p.initials}</div>
+      <div class="row-info">
+        <div class="row-name">${p.name} ${pills}</div>
+        <div class="row-sub">${p.snitch_count>0?`${p.snitch_count} snitch${p.snitch_count>1?'es':''} this week`:'Budget on track'}</div>
+      </div>
+      <div class="row-score">
+        <div class="row-pts ${redScore?'pts-red':''}" id="pts-${p.id}">${p.score.toLocaleString()}</div>
+        <div class="row-change">${chg}</div>
+      </div>
+    </div>`; }).join('');
+}
+
+function applyLeaderboard(data){
+  document.getElementById('date-range').textContent = data.date_range;
+  const titleMap = {week:"This week's",month:"This month's",alltime:"All time"};
+  document.getElementById('lb-title').innerHTML = `${titleMap[data.period]||"This week's"} <em>board</em>`;
+  document.getElementById('podium').innerHTML = renderPodium(data.leaderboard);
+
+  const listEl = document.getElementById('lb-list');
+  const existing = listEl.querySelectorAll('.lb-row');
+  if(existing.length > 0){
+    data.leaderboard.filter(p=>p.rank>3).forEach(p=>{
+      const ptsEl = document.getElementById(`pts-${p.id}`);
+      if(ptsEl){
+        const oldVal = parseInt(ptsEl.textContent.replace(/,/g,''));
+        if(oldVal !== p.score){
+          ptsEl.textContent = p.score.toLocaleString();
+          ptsEl.style.transition = 'color .15s';
+          ptsEl.style.color = p.score < oldVal ? 'var(--red)' : 'var(--green3)';
+          setTimeout(()=>{ ptsEl.style.color = p.score<1035&&currentPeriod==='week'?'var(--red)':'var(--green)'; }, 800);
+        }
+      }
+    });
+    const sorted = [...data.leaderboard.filter(r=>r.rank>3)].sort((a,b)=>b.score-a.score);
+    sorted.forEach((p,i)=>{
+      const row = document.getElementById(`lbrow-${p.id}`);
+      const rankEl = row && row.querySelector('.row-rank');
+      if(rankEl){ rankEl.textContent = p.rank; rankEl.className = `row-rank ${rankClass(p.rank)}`; }
+      if(row) listEl.appendChild(row);
+    });
+  } else {
+    listEl.innerHTML = renderList(data.leaderboard);
+  }
+}
+
+async function loadLeaderboard(period='week'){
+  const res = await fetch(`/api/leaderboard?period=${period}`);
+  const data = await res.json();
+  applyLeaderboard(data);
+}
+
+function setPeriod(period,btn){
+  currentPeriod = period;
+  document.querySelectorAll('.week-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('lb-list').innerHTML = '';
+  loadLeaderboard(period);
+}
+
+/* ── FEED ── */
+function feedCardHTML(e){
+  const p = e.player;
+  const isSnitch = e.type==='snitch';
+  const badgeMap = {snitch:'badge-snitch',streak:'badge-streak',goal:'badge-goal',clean:'badge-clean'};
+  const badgeLabelMap = {snitch:'SNITCHED',streak:`${e.streak_days || 0}-DAY STREAK`,goal:'GOAL HIT',clean:'CLEAN DAY'};
+  const bodyMap = {
+    snitch:`<strong>${p.name}</strong> spent on <strong>${e.category}</strong>.`,
+    streak:`<strong>${p.name}</strong> hit a ${e.streak_days}-day clean streak.`,
+    goal:`<strong>${p.name}</strong> stayed under their $${e.budget} weekly budget.`,
+    clean:`<strong>${p.name}</strong> completed a clean day with zero spending.`,
+  };
+  const noteHTML = e.note ? `<div class="fc-note">${e.note}</div>` : '';
+  const amountHTML = isSnitch
+    ? `<div class="fc-amount">$${e.amount.toFixed(2)}</div>`
+    : e.type==='goal'
+    ? `<div class="fc-amount green">Under by $${e.under_by}</div>`
+    : '';
+  const likedClass   = e.reaction==='like'   ? 'liked'    : '';
+  const dislikedClass= e.reaction==='dislike' ? 'disliked' : '';
+  const ptsClass = e.pts_change < 0 ? 'pts-down':'pts-up';
+  const ptsLabel = `${e.pts_change>0?'+':''}${e.pts_change} pts`;
+  const thumbUp = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>`;
+  const thumbDn = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>`;
+
+  return `
+  <div class="feed-card ${isSnitch?'snitch-fc':''}" id="fc-${e.id}">
+    <div class="fc-top">
+      <div class="fc-av" style="background:${p.bg};color:${p.fg};">${p.initials}</div>
+      <div class="fc-meta">
+        <div class="fc-name">${p.name} <span class="fc-badge ${badgeMap[e.type]}">${badgeLabelMap[e.type]}</span></div>
+        <div class="fc-time">${timeAgo(e.ts)}</div>
+      </div>
+    </div>
+    <div class="fc-body">${bodyMap[e.type]||''}</div>
+    ${noteHTML}
+    ${amountHTML}
+    <div class="fc-actions">
+      <button class="fc-btn ${likedClass}" id="like-${e.id}" onclick="doReact('${e.id}','like')">
+        ${thumbUp}<span id="lc-${e.id}">${e.likes}</span>
+      </button>
+      <button class="fc-btn ${dislikedClass}" id="dislike-${e.id}" onclick="doReact('${e.id}','dislike')">
+        ${thumbDn}<span id="dc-${e.id}">${e.dislikes}</span>
+      </button>
+      <span class="fc-pts-change ${ptsClass}">${ptsLabel}</span>
+    </div>
+  </div>`;
+}
+
+async function loadFeed(){
+  const res = await fetch('/api/feed');
+  const events = await res.json();
+  document.getElementById('feed').innerHTML = events.map(feedCardHTML).join('');
+}
+
+async function doReact(eventId, action){
+  const res = await fetch('/api/react',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({event_id:eventId,action})});
+  const data = await res.json();
+  document.getElementById(`lc-${eventId}`).textContent = data.likes;
+  document.getElementById(`dc-${eventId}`).textContent = data.dislikes;
+  document.getElementById(`like-${eventId}`).className    = 'fc-btn'+(data.reaction==='like'?   ' liked':'');
+  document.getElementById(`dislike-${eventId}`).className = 'fc-btn'+(data.reaction==='dislike'?' disliked':'');
+  if(data.leaderboard) applyLeaderboard({period:currentPeriod,date_range:document.getElementById('date-range').textContent,leaderboard:data.leaderboard});
+}
+
+/* ── PUNISHMENTS ── */
+function renderPunishments(puns, most_snitched){
+  const grouped = {};
+  
+  puns.forEach(p => {
+    if (!grouped[p.target_player]) {
+      grouped[p.target_player] = [];
+    }
+    grouped[p.target_player].push(p);
+  });
+
+  let html = '';
+  most_snitched.forEach((player, idx) => {
+    const playerPuns = grouped[player.id] || [];
+    const maxVotes = Math.max(...playerPuns.map(p=>p.votes),1);
+    
+    html += `
+    <div class="pun-player-group">
+      <div class="pun-player-header">
+        <div class="pun-player-av" style="background:${player.bg};color:${player.fg};">${player.initials}</div>
+        <div class="pun-player-info">
+          <div class="pun-player-name">Choose ${player.name}'s punishment</div>
+          <div class="pun-player-offense">Most snitched #${idx+1} – ${playerPuns[0]?.offense || ''}</div>
+        </div>
+        <div class="pun-player-count">
+          <div class="pun-player-count-num">${player.snitch_count}x</div>
+          <div class="pun-player-count-label">snitches</div>
+        </div>
+      </div>
+      <div class="pun-options">
+        ${playerPuns.map((p,i)=>{
+          const isWinning = i===0;
+          const pct = Math.round(p.votes/maxVotes*100);
+          return `
+          <div class="pun-card ${p.voted?'voted':''} ${isWinning?'winning':''}" id="pun-${p.id}">
+            <div style="display:flex;gap:12px;align-items:flex-start;">
+              <div class="pun-icon">${p.icon}</div>
+              <div style="flex:1;">
+                <div class="pun-label">${p.label}</div>
+              </div>
+            </div>
+            <div class="pun-bar-wrap"><div class="pun-bar-fill" style="width:${pct}%"></div></div>
+            <div class="pun-meta">
+              <span class="pun-vote-count" id="pvcount-${p.id}">${p.votes} vote${p.votes!==1?'s':''}</span>
+              ${isWinning?'<span class="winning-tag">LEADING</span>':''}
+            </div>
+            <button class="pun-vote-btn ${p.voted?'voted-btn':''}" id="pvbtn-${p.id}" onclick="votePunishment('${p.id}')">
+              ${p.voted?'Voted':'Vote'}
+            </button>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  });
+  
+  document.getElementById('pun-container').innerHTML = html;
+}
+
+async function loadPunishments(){
+  const res = await fetch('/api/punishments');
+  const data = await res.json();
+  renderPunishments(data.punishments, data.most_snitched);
+}
+
+async function votePunishment(pid){
+  const res = await fetch('/api/punishments/vote',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({punishment_id:pid})});
+  const data = await res.json();
+  renderPunishments(data.punishments, data.most_snitched);
+}
+
+// init
+loadLeaderboard('week');
+loadFeed();
+loadPunishments();
+setInterval(()=>{ loadFeed(); loadLeaderboard(currentPeriod); }, 15000);
+</script>
+</body>
+</html>
