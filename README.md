@@ -79,6 +79,8 @@ Then open the link in your browser.
 ### ❌ Scoring Issue
 **Like/Dislike buttons don't properly update player scores on the leaderboard.** The points change in the feed display but the leaderboard rankings don't re-sort correctly. This is a bug in the reaction logic that needs fixing.
 
+**Background** Leadership Background needs to be white - not beige
+
 **Workaround:** The punishments voting and feed display work fine. Use those while scoring is being debugged.
 
 ---
