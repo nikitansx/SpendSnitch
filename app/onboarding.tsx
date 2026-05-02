@@ -5,20 +5,20 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  Alert,
 } from "react-native";
 
 import { db } from "../firebase";
 
 import {
-  collection,
   addDoc,
+  collection,
   getDocs,
   query,
   where,
@@ -428,7 +428,7 @@ const loginUser = async () => {
 <Text style={styles.bankButtonText}>
   {csvName
     ? `Uploaded: ${csvName}`
-    : "Upload mock bank CSV"}
+    : "Connect bank"}
 </Text>
       </TouchableOpacity>
 

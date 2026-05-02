@@ -1,11 +1,6 @@
-Item,Cost,Category
-Sushi,8.50,Food
-Zara,42.00,Shopping
-Uber,15.60,Travel
-Netflix,19.99,Entertainment
-Bubble Tea,9.50,Food
-Kmart,28.00,Shopping
-Bus Top Up,20.00,Travel
-Hoyts,24.00,Entertainment
-McDonalds,14.80,Food
-Cotton On,36.00,Shopping
+Date,Time,Item,Cost,Category
+2026-05-01,12:30,Sushi,8.50,Food
+2026-05-02,19:45,Zara,42.00,Shopping
+2026-05-03,23:10,Uber Eats,28.40,Food
+2026-05-04,08:15,Bus Top Up,20.00,Travel
+2026-05-04,21:30,Netflix,19.99,Entertainment

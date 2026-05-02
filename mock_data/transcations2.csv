@@ -1,16 +1,16 @@
-Item,Cost,Category
-Starbucks,7.20,Food
-ASOS,68.50,Shopping
-Uber,22.40,Travel
-Spotify,13.99,Entertainment
-Subway,12.80,Food
-H&M,54.00,Shopping
-Train Top Up,18.00,Travel
-Timezone,35.00,Entertainment
-Dominos,16.50,Food
-Nike,120.00,Shopping
-Bubble Tea,8.90,Food
-Airbnb Deposit,95.00,Travel
-Apple Music,12.99,Entertainment
-KFC,19.40,Food
-Mecca,72.00,Shopping
+Date,Time,Item,Cost,Category
+2026-05-01,08:10,Starbucks,7.20,Food
+2026-05-01,18:45,ASOS,68.50,Shopping
+2026-05-02,09:05,Uber,22.40,Travel
+2026-05-02,21:30,Spotify,13.99,Entertainment
+2026-05-03,12:20,Subway,12.80,Food
+2026-05-03,16:10,H&M,54.00,Shopping
+2026-05-04,07:55,Train Top Up,18.00,Travel
+2026-05-04,20:15,Timezone,35.00,Entertainment
+2026-05-05,19:40,Dominos,16.50,Food
+2026-05-05,14:25,Nike,120.00,Shopping
+2026-05-06,15:10,Bubble Tea,8.90,Food
+2026-05-06,10:30,Airbnb Deposit,95.00,Travel
+2026-05-07,22:05,Apple Music,12.99,Entertainment
+2026-05-07,13:15,KFC,19.40,Food
+2026-05-08,17:50,Mecca,72.00,Shopping
