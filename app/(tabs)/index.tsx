@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Ionicons from "@expo/vector-icons/Ionicons";
+
 import {
   Modal,
   ScrollView,
@@ -8,8 +9,20 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
+
 import { router } from "expo-router";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import {
+  addDoc,
+  collection,
+  serverTimestamp,
+} from "firebase/firestore";
+
+import { db } from "../../firebase";
 
 export default function HomeScreen() {
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
@@ -19,7 +32,7 @@ export default function HomeScreen() {
   const alerts = [
     {
       id: 1,
-      name: "Natasha",
+      username: "natasha",
       category: "Food",
       amount: "$100",
       place: "Mama Brown",
@@ -27,7 +40,7 @@ export default function HomeScreen() {
     },
     {
       id: 2,
-      name: "Mia",
+      username: "mia",
       category: "Shopping",
       amount: "$240",
       place: "Zara",
@@ -35,7 +48,7 @@ export default function HomeScreen() {
     },
     {
       id: 3,
-      name: "Liam",
+      username: "liam",
       category: "Entertainment",
       amount: "$85",
       place: "Event Cinemas",
@@ -43,7 +56,7 @@ export default function HomeScreen() {
     },
     {
       id: 4,
-      name: "Sophie",
+      username: "sophie",
       category: "Coffee",
       amount: "$32",
       place: "Starbucks",
@@ -59,25 +72,71 @@ export default function HomeScreen() {
     "Iconic purchase",
   ];
 
-  const sendQuickMessage = () => {
-    setSentMessage("Sent! 🎉");
+  const sendQuickMessage = async (message: string) => {
+    try {
+      const currentUser = await AsyncStorage.getItem("loggedInUser");
 
-    setTimeout(() => {
-      setSelectedAlert(null);
-      setSentMessage("");
-    }, 2000);
+      if (!currentUser) {
+        Alert.alert("Error", "No logged in user found");
+        return;
+      }
+
+      console.log("Sending from:", currentUser);
+
+      await addDoc(collection(db, "reactions"), {
+        toUser: selectedAlert.username.toLowerCase().trim(),
+        fromUser: currentUser.toLowerCase().trim(),
+        message: message,
+        category: selectedAlert.category,
+        place: selectedAlert.place,
+        createdAt: serverTimestamp(),
+      });
+
+      setSentMessage("Sent! 🎉");
+
+      setTimeout(() => {
+        setSelectedAlert(null);
+        setSentMessage("");
+      }, 2000);
+
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const sendCustomMessage = () => {
+  const sendCustomMessage = async () => {
     if (customMessage.trim() === "") return;
 
-    setSentMessage("Message sent! 🎉");
+    try {
+      const currentUser = await AsyncStorage.getItem("loggedInUser");
 
-    setTimeout(() => {
-      setSelectedAlert(null);
-      setCustomMessage("");
-      setSentMessage("");
-    }, 2000);
+      if (!currentUser) {
+        Alert.alert("Error", "No logged in user found");
+        return;
+      }
+
+      console.log("Sending from:", currentUser);
+
+      await addDoc(collection(db, "reactions"), {
+        toUser: selectedAlert.username.toLowerCase().trim(),
+        fromUser: currentUser.toLowerCase().trim(),
+        message: customMessage,
+        category: selectedAlert.category,
+        place: selectedAlert.place,
+        createdAt: serverTimestamp(),
+      });
+
+      setSentMessage("Message sent! 🎉");
+
+      setTimeout(() => {
+        setSelectedAlert(null);
+        setCustomMessage("");
+        setSentMessage("");
+      }, 2000);
+
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -94,7 +153,11 @@ export default function HomeScreen() {
             activeOpacity={0.8}
             onPress={() => router.push("/reactions")}
           >
-            <Ionicons name="chatbubble-ellipses-outline" size={22} color="#4F772D" />
+            <Ionicons
+              name="chatbubble-ellipses-outline"
+              size={22}
+              color="#4F772D"
+            />
           </TouchableOpacity>
         </View>
 
@@ -110,15 +173,28 @@ export default function HomeScreen() {
             activeOpacity={0.9}
           >
             <View style={styles.topRow}>
-              <Text style={styles.friendName}>{alert.name}</Text>
-              <Text style={styles.time}>{alert.time}</Text>
+              <Text style={styles.friendName}>
+                {alert.username}
+              </Text>
+
+              <Text style={styles.time}>
+                {alert.time}
+              </Text>
             </View>
 
             <Text style={styles.alertText}>
               went over their{" "}
-              <Text style={styles.bold}>{alert.category}</Text> budget and
-              spent <Text style={styles.bold}>{alert.amount}</Text> at{" "}
-              <Text style={styles.bold}>{alert.place}</Text>
+              <Text style={styles.bold}>
+                {alert.category}
+              </Text>{" "}
+              budget and spent{" "}
+              <Text style={styles.bold}>
+                {alert.amount}
+              </Text>{" "}
+              at{" "}
+              <Text style={styles.bold}>
+                {alert.place}
+              </Text>
             </Text>
           </TouchableOpacity>
         ))}
@@ -134,17 +210,19 @@ export default function HomeScreen() {
             {selectedAlert && (
               <>
                 <Text style={styles.modalTitle}>
-                  React to {selectedAlert.name}'s spend 👀
+                  React to {selectedAlert.username}'s spend 👀
                 </Text>
 
                 {quickMessages.map((msg, index) => (
                   <TouchableOpacity
                     key={index}
                     style={styles.quickMessage}
-                    onPress={() => sendQuickMessage()}
+                    onPress={() => sendQuickMessage(msg)}
                     activeOpacity={0.9}
                   >
-                    <Text style={styles.quickMessageText}>{msg}</Text>
+                    <Text style={styles.quickMessageText}>
+                      {msg}
+                    </Text>
                   </TouchableOpacity>
                 ))}
 
@@ -161,19 +239,25 @@ export default function HomeScreen() {
                   onPress={sendCustomMessage}
                   activeOpacity={0.9}
                 >
-                  <Text style={styles.sendButtonText}>Send</Text>
+                  <Text style={styles.sendButtonText}>
+                    Send
+                  </Text>
                 </TouchableOpacity>
 
                 {sentMessage !== "" ? (
                   <View style={styles.sentBox}>
-                    <Text style={styles.sentText}>{sentMessage}</Text>
+                    <Text style={styles.sentText}>
+                      {sentMessage}
+                    </Text>
                   </View>
                 ) : null}
 
                 <TouchableOpacity
                   onPress={() => setSelectedAlert(null)}
                 >
-                  <Text style={styles.closeText}>Close</Text>
+                  <Text style={styles.closeText}>
+                    Close
+                  </Text>
                 </TouchableOpacity>
               </>
             )}
@@ -205,16 +289,16 @@ const styles = StyleSheet.create({
     letterSpacing: -1.2,
   },
 
-settingsButton: {
-  backgroundColor: "#FFFFFF",
-  width: 42,
-  height: 42,
-  borderRadius: 12,
-  borderWidth: 2,
-  borderColor: "#4F772D",
-  alignItems: "center",
-  justifyContent: "center",
-},
+  settingsButton: {
+    backgroundColor: "#FFFFFF",
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#4F772D",
+    alignItems: "center",
+    justifyContent: "center",
+  },
 
   subtitle: {
     fontSize: 15,

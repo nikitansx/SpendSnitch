@@ -92,94 +92,102 @@ export default function OnboardingScreen() {
     setCsvData(parsed);
   };
 
-const finishOnboarding = async () => {
-  try {
-    const formattedUsername = username
-      .trim()
-      .toLowerCase();
+  const finishOnboarding = async () => {
+    try {
+      const formattedUsername = username
+        .trim()
+        .toLowerCase();
 
-    // Check if username already exists
-    const q = query(
-      collection(db, "users"),
-      where("username", "==", formattedUsername)
-    );
-
-    const querySnapshot = await getDocs(q);
-
-    if (!querySnapshot.empty) {
-      Alert.alert("Error", "Username already exists");
-      return;
-    }
-
-    // Save user to Firebase
-    await addDoc(collection(db, "users"), {
-      username: formattedUsername,
-      password,
-    });
-
-    // Save locally
-    await AsyncStorage.setItem(
-      "spendSnitchUserData",
-      JSON.stringify({
-        username: formattedUsername,
-      })
-    );
-
-    // Save current logged in username
-    await AsyncStorage.setItem(
-      "username",
-      formattedUsername
-    );
-
-    router.replace("/(tabs)");
-  } catch (error) {
-    console.log(error);
-    Alert.alert("Error", "Could not create account");
-  }
-};
-
-const loginUser = async () => {
-  try {
-    const formattedUsername = username
-      .trim()
-      .toLowerCase();
-
-    const q = query(
-      collection(db, "users"),
-      where("username", "==", formattedUsername),
-      where("password", "==", password)
-    );
-
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-      Alert.alert(
-        "Login Failed",
-        "Invalid username or password"
+      const q = query(
+        collection(db, "users"),
+        where("username", "==", formattedUsername)
       );
-      return;
-    }
 
-    // Save locally
-    await AsyncStorage.setItem(
-      "spendSnitchUserData",
-      JSON.stringify({
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        Alert.alert("Error", "Username already exists");
+        return;
+      }
+
+      await addDoc(collection(db, "users"), {
         username: formattedUsername,
-      })
-    );
+        password,
+      });
 
-    // Save current logged in username
-    await AsyncStorage.setItem(
-      "username",
-      formattedUsername
-    );
+      // SAVE USER LOCALLY
+      await AsyncStorage.setItem(
+        "loggedInUser",
+        formattedUsername
+      );
 
-    router.replace("/(tabs)");
-  } catch (error) {
-    console.log(error);
-    Alert.alert("Error", "Login failed");
-  }
-};
+      await AsyncStorage.setItem(
+        "spendSnitchUserData",
+        JSON.stringify({
+          username: formattedUsername,
+        })
+      );
+
+      console.log(
+        "Saved logged in user:",
+        formattedUsername
+      );
+
+      router.replace("/(tabs)");
+
+    } catch (error) {
+      console.log(error);
+      Alert.alert("Error", "Could not create account");
+    }
+  };
+
+  const loginUser = async () => {
+    try {
+      const formattedUsername = username
+        .trim()
+        .toLowerCase();
+
+      const q = query(
+        collection(db, "users"),
+        where("username", "==", formattedUsername),
+        where("password", "==", password)
+      );
+
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        Alert.alert(
+          "Login Failed",
+          "Invalid username or password"
+        );
+        return;
+      }
+
+      // SAVE USER LOCALLY
+      await AsyncStorage.setItem(
+        "loggedInUser",
+        formattedUsername
+      );
+
+      await AsyncStorage.setItem(
+        "spendSnitchUserData",
+        JSON.stringify({
+          username: formattedUsername,
+        })
+      );
+
+      console.log(
+        "Logged in as:",
+        formattedUsername
+      );
+
+      router.replace("/(tabs)");
+
+    } catch (error) {
+      console.log(error);
+      Alert.alert("Error", "Login failed");
+    }
+  };
 
   if (activeTab === "login") {
     return (
@@ -197,11 +205,15 @@ const loginUser = async () => {
           <TouchableOpacity
             style={[styles.tab, styles.activeTab]}
           >
-            <Text style={styles.activeTabText}>Login</Text>
+            <Text style={styles.activeTabText}>
+              Login
+            </Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.title}>Welcome Back</Text>
+        <Text style={styles.title}>
+          Welcome Back
+        </Text>
 
         <Text style={styles.subtitle}>
           Log in to continue tracking your spending.
@@ -228,7 +240,9 @@ const loginUser = async () => {
           style={styles.button}
           onPress={loginUser}
         >
-          <Text style={styles.buttonText}>Login</Text>
+          <Text style={styles.buttonText}>
+            Login
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -256,7 +270,9 @@ const loginUser = async () => {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.title}>Create Account</Text>
+        <Text style={styles.title}>
+          Create Account
+        </Text>
 
         <Text style={styles.subtitle}>
           Create an account to start using SpendSnitch.
@@ -280,52 +296,57 @@ const loginUser = async () => {
         />
 
         <TouchableOpacity
-  style={styles.button}
-  onPress={async () => {
-    const formattedUsername = username
-      .trim()
-      .toLowerCase();
+          style={styles.button}
+          onPress={async () => {
+            const formattedUsername = username
+              .trim()
+              .toLowerCase();
 
-    if (!formattedUsername || !password) {
-      Alert.alert(
-        "Missing Information",
-        "Please enter a username and password"
-      );
-      return;
-    }
+            if (!formattedUsername || !password) {
+              Alert.alert(
+                "Missing Information",
+                "Please enter a username and password"
+              );
+              return;
+            }
 
-    try {
-      const q = query(
-        collection(db, "users"),
-        where(
-          "username",
-          "==",
-          formattedUsername
-        )
-      );
+            try {
+              const q = query(
+                collection(db, "users"),
+                where(
+                  "username",
+                  "==",
+                  formattedUsername
+                )
+              );
 
-      const querySnapshot = await getDocs(q);
+              const querySnapshot =
+                await getDocs(q);
 
-      if (!querySnapshot.empty) {
-        Alert.alert(
-          "Error",
-          "Username already exists"
-        );
-        return;
-      }
+              if (!querySnapshot.empty) {
+                Alert.alert(
+                  "Error",
+                  "Username already exists"
+                );
+                return;
+              }
 
-      setStep(2);
-    } catch (error) {
-      console.log(error);
-      Alert.alert(
-        "Error",
-        "Could not check username"
-      );
-    }
-  }}
->
-  <Text style={styles.buttonText}>Next</Text>
-</TouchableOpacity>
+              setStep(2);
+
+            } catch (error) {
+              console.log(error);
+
+              Alert.alert(
+                "Error",
+                "Could not check username"
+              );
+            }
+          }}
+        >
+          <Text style={styles.buttonText}>
+            Next
+          </Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -358,11 +379,16 @@ const loginUser = async () => {
       {Object.keys(budgets).map((category) => {
         const budgetValue =
           Number(
-            budgets[category as keyof typeof budgets]
+            budgets[
+              category as keyof typeof budgets
+            ]
           ) || 0;
 
         return (
-          <View key={category} style={styles.budgetCard}>
+          <View
+            key={category}
+            style={styles.budgetCard}
+          >
             <View style={styles.budgetHeader}>
               <Text style={styles.category}>
                 {category}
@@ -529,91 +555,5 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 17,
     fontWeight: "bold",
-  },
-
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#111827",
-    marginTop: 20,
-    marginBottom: 16,
-  },
-
-  budgetCard: {
-    backgroundColor: "white",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: "#D9EBCB",
-  },
-
-  budgetHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-
-  category: {
-    fontSize: 17,
-    fontWeight: "bold",
-    color: "#111827",
-  },
-
-  amountBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F3FFE1",
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-
-  dollarSign: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#111827",
-  },
-
-  amountInput: {
-    minWidth: 45,
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#111827",
-    padding: 4,
-  },
-
-  slider: {
-    width: "100%",
-    height: 40,
-    marginTop: 12,
-  },
-
-  dollarText: {
-    color: "#6B7280",
-    marginTop: 4,
-  },
-
-  bankText: {
-    fontSize: 14,
-    color: "#6B7280",
-    marginBottom: 12,
-    lineHeight: 20,
-  },
-
-  bankButton: {
-    backgroundColor: "white",
-    borderRadius: 16,
-    padding: 16,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#7CB342",
-    marginBottom: 10,
-  },
-
-  bankButtonText: {
-    color: "#7CB342",
-    fontWeight: "bold",
-    fontSize: 15,
   },
 });

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -6,108 +6,75 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
+
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  orderBy,
+} from "firebase/firestore";
+
+import { db } from "../../firebase";
+
 export default function ReactionsScreen() {
-  const reactions = [
-    {
-      id: 1,
-      friend: "Sarah",
-      message: "Come on 😭",
-      category: "Food",
-      place: "Mama Brown",
-      time: "2 mins ago",
-    },
-    {
-      id: 2,
-      friend: "Natasha",
-      message: "That was NOT in the budget",
-      category: "Shopping",
-      place: "Zara",
-      time: "8 mins ago",
-    },
-    {
-      id: 3,
-      friend: "Jessica",
-      message: "Worth it honestly 👀",
-      category: "Coffee",
-      place: "Starbucks",
-      time: "20 mins ago",
-    },
-    {
-      id: 4,
-      friend: "Mia",
-      message: "You can do better than that!",
-      category: "Entertainment",
-      place: "Event Cinemas",
-      time: "1 hour ago",
-    },
-    {
-      id: 5,
-      friend: "Rishika",
-      message: "Did you really need another coffee?",
-      category: "Coffee",
-      place: "Coffee Club",
-      time: "2 hours ago",
-    },
-    {
-      id: 6,
-      friend: "Vidushi",
-      message: "At least invite me next time 😭",
-      category: "Food",
-      place: "Monsoon Poon",
-      time: "3 hours ago",
-    },
-    {
-      id: 7,
-      friend: "Krishna",
-      message: "Actually fair enough",
-      category: "Transport",
-      place: "Uber",
-      time: "5 hours ago",
-    },
-    {
-      id: 8,
-      friend: "Liam",
-      message: "That gym membership is NOT being used",
-      category: "Fitness",
-      place: "CityFitness",
-      time: "7 hours ago",
-    },
-    {
-      id: 9,
-      friend: "Sophie",
-      message: "Lowkey worth it though",
-      category: "Shopping",
-      place: "Glassons",
-      time: "Yesterday",
-    },
-    {
-      id: 10,
-      friend: "Ben",
-      message: "Another bubble tea is crazy",
-      category: "Food",
-      place: "Chatime",
-      time: "Yesterday",
-    },
-    {
-      id: 11,
-      friend: "Emily",
-      message: "This is why you're broke",
-      category: "Entertainment",
-      place: "Steam",
-      time: "2 days ago",
-    },
-    {
-      id: 12,
-      friend: "Josh",
-      message: "I would've done the same honestly",
-      category: "Shopping",
-      place: "Nike",
-      time: "2 days ago",
-    },
-  ];
+  const [reactions, setReactions] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadReactions();
+
+    const interval = setInterval(() => {
+      loadReactions();
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const loadReactions = async () => {
+    try {
+      const currentUser = await AsyncStorage.getItem("loggedInUser");
+
+      //console.log("Current logged in user:", currentUser);
+
+      console.log("CURRENT USER:");
+      console.log(currentUser);
+
+      if (!currentUser) {
+        console.log("No logged in user");
+        return;
+      }
+
+      const cleanUser = currentUser.toLowerCase().trim();
+
+      const q = query(
+        collection(db, "reactions"),
+        where("toUser", "==", cleanUser)
+      );
+
+      const querySnapshot = await getDocs(q);
+
+      const reactionsData: any[] = [];
+
+      querySnapshot.forEach((doc) => {
+        reactionsData.push({
+          id: doc.id,
+          ...doc.data(),
+        });
+      });
+
+      console.log("Loaded reactions:", reactionsData);
+
+      setReactions(reactionsData);
+
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -133,38 +100,46 @@ export default function ReactionsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 40 }}
       >
-        {reactions.map((reaction) => (
-          <TouchableOpacity
-            key={reaction.id}
-            style={styles.reactionCard}
-            activeOpacity={0.9}
-          >
-            <View style={styles.topRow}>
-              <Text style={styles.friendName}>
-                {reaction.friend}
-              </Text>
-
-              <Text style={styles.time}>
-                {reaction.time}
-              </Text>
-            </View>
-
-            <Text style={styles.message}>
-              replied{" "}
-              <Text style={styles.bold}>
-                "{reaction.message}"
-              </Text>{" "}
-              to your{" "}
-              <Text style={styles.bold}>
-                {reaction.category}
-              </Text>{" "}
-              spend alert at{" "}
-              <Text style={styles.bold}>
-                {reaction.place}
-              </Text>
+        {reactions.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>
+              No reactions yet 👀
             </Text>
-          </TouchableOpacity>
-        ))}
+          </View>
+        ) : (
+          reactions.map((reaction) => (
+            <TouchableOpacity
+              key={reaction.id}
+              style={styles.reactionCard}
+              activeOpacity={0.9}
+            >
+              <View style={styles.topRow}>
+                <Text style={styles.friendName}>
+                  {reaction.fromUser || "unknown"}
+                </Text>
+
+                <Text style={styles.time}>
+                  just now
+                </Text>
+              </View>
+
+              <Text style={styles.message}>
+                replied{" "}
+                <Text style={styles.bold}>
+                  "{reaction.message}"
+                </Text>{" "}
+                to your{" "}
+                <Text style={styles.bold}>
+                  {reaction.category}
+                </Text>{" "}
+                spend alert at{" "}
+                <Text style={styles.bold}>
+                  {reaction.place}
+                </Text>
+              </Text>
+            </TouchableOpacity>
+          ))
+        )}
       </ScrollView>
     </View>
   );
@@ -244,5 +219,16 @@ const styles = StyleSheet.create({
   bold: {
     fontWeight: "700",
     color: "#4F772D",
+  },
+
+  emptyContainer: {
+    marginTop: 80,
+    alignItems: "center",
+  },
+
+  emptyText: {
+    fontSize: 16,
+    color: "#6B7280",
+    fontWeight: "600",
   },
 });
