@@ -33,7 +33,6 @@ export default function AICoachScreen() {
           pattern: "No mock CSV transactions found yet.",
           problemCategory: "Unknown",
           numericInsight: "No data to crunch yet.",
-          timeInsight: "Not enough date data yet.",
           tip: "Upload a mock bank CSV first from onboarding or the budgets page.",
         });
         setLoading(false);
@@ -59,7 +58,6 @@ Return ONLY valid JSON in this exact format:
   "pattern": "specific spending pattern using the transaction data",
   "problemCategory": "one category only",
   "numericInsight": "one numeric insight, e.g. amount over budget or what the overspend could have bought instead (like you could have bought 5 coffees instead)",
-  "timeInsight": "one time/date insight if dates exist, otherwise say not enough date data yet",
   "tip": "one practical saving tip"
 }
 
@@ -122,7 +120,6 @@ Rules:
         pattern: "Something went wrong while analysing your spending.",
         problemCategory: "Error",
         numericInsight: "Could not calculate.",
-        timeInsight: "Could not determine.",
         tip: "Check your internet connection and try again.",
       });
     }
@@ -203,11 +200,6 @@ Rules:
               <View style={styles.card}>
                 <Text style={styles.cardLabel}>Numeric Insight</Text>
                 <Text style={styles.cardText}>{report.numericInsight}</Text>
-              </View>
-
-              <View style={styles.card}>
-                <Text style={styles.cardLabel}>Time Insight</Text>
-                <Text style={styles.cardText}>{report.timeInsight}</Text>
               </View>
 
               <Text style={styles.footerText}>
