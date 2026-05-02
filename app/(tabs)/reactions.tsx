@@ -122,20 +122,33 @@ export default function ReactionsScreen() {
                 </Text>
               </View>
 
-              <Text style={styles.message}>
-                replied{" "}
-                <Text style={styles.bold}>
-                  "{reaction.message || "sent a reaction"}"
-                </Text>{" "}
-                to your{" "}
-                <Text style={styles.bold}>
-                  {reaction.category}
-                </Text>{" "}
-                spend alert at{" "}
-                <Text style={styles.bold}>
-                  {reaction.place}
-                </Text>
-              </Text>
+              {reaction.fromUser?.toLowerCase() === "sophie" ? (
+                  <Text style={styles.message}>
+                    sent a photo reaction to your{" "}
+                    <Text style={styles.bold}>
+                      {reaction.category}
+                    </Text>{" "}
+                    spend alert at{" "}
+                    <Text style={styles.bold}>
+                      {reaction.place}
+                    </Text>
+                  </Text>
+                ) : (
+                  <Text style={styles.message}>
+                    replied{" "}
+                    <Text style={styles.bold}>
+                      "{reaction.message || "sent a reaction"}"
+                    </Text>{" "}
+                    to your{" "}
+                    <Text style={styles.bold}>
+                      {reaction.category}
+                    </Text>{" "}
+                    spend alert at{" "}
+                    <Text style={styles.bold}>
+                      {reaction.place}
+                    </Text>
+                  </Text>
+                )}
 
               {/* DEMO PHOTO REACTION FOR SOPHIE */}
 

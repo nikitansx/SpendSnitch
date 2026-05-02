@@ -32,7 +32,7 @@ export default function FriendsScreen() {
     { id: "3", username: "rishika" },
   ]);
 
-const [requests, setRequests] = useState([]);
+  const [requests, setRequests] = useState([]);
 
   const [showAddFriendModal, setShowAddFriendModal] =
     useState(false);
@@ -45,18 +45,18 @@ const [requests, setRequests] = useState([]);
 
   const [editMode, setEditMode] = useState(false);
 
-const acceptRequest = (request) => {
-  const newFriend = {
-    id: request.id,
-    username: request.from,
+  const acceptRequest = (request) => {
+    const newFriend = {
+      id: request.id,
+      username: request.from,
+    };
+
+    setFriends([...friends, newFriend]);
+
+    setRequests(
+      requests.filter((r) => r.id !== request.id)
+    );
   };
-
-  setFriends([...friends, newFriend]);
-
-  setRequests(
-    requests.filter((r) => r.id !== request.id)
-  );
-};
 
   const rejectRequest = (id) => {
     setRequests(
@@ -70,101 +70,135 @@ const acceptRequest = (request) => {
     );
   };
 
- const searchUsers = async (text) => {
-  setSearchUsername(text);
+  const searchUsers = async (text) => {
+    setSearchUsername(text);
 
-  if (!text.trim()) {
-    setMatchingUsers([]);
-    return;
-  }
-
-  try {
-    const querySnapshot = await getDocs(
-      collection(db, "users")
-    );
-
-    const users = [];
-
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-
-      if (
-        data.username.includes(
-          text.toLowerCase()
-        )
-      ) {
-        users.push({
-          id: doc.id,
-          ...data,
-        });
-      }
-    });
-
-    setMatchingUsers(users);
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-const sendFriendRequest = async (selectedUser) => {
-  try {
-    const currentUsername = await AsyncStorage.getItem("username");
-
-    if (!currentUsername) {
-      Alert.alert("Error", "No logged in user found.");
+    if (!text.trim()) {
+      setMatchingUsers([]);
       return;
     }
 
-    await addDoc(collection(db, "friendRequests"), {
-      from: currentUsername,
-      to: selectedUser.username,
-      status: "pending",
-      createdAt: new Date(),
-    });
+    try {
+      const querySnapshot = await getDocs(
+        collection(db, "users")
+      );
 
-    Alert.alert(
-      "Sent!",
-      `Friend request sent to ${selectedUser.username}`
-    );
-  } catch (error) {
-    console.log(error);
-    Alert.alert("Error", "Could not send friend request.");
-  }
-};
+      const users = [];
 
-const loadFriendRequests = async () => {
-  try {
-    const currentUsername =
-      await AsyncStorage.getItem("username");
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
 
-    if (!currentUsername) return;
-
-    const q = query(
-      collection(db, "friendRequests"),
-      where("to", "==", currentUsername),
-      where("status", "==", "pending")
-    );
-
-    const querySnapshot = await getDocs(q);
-
-    const requestsList = [];
-
-    querySnapshot.forEach((doc) => {
-      requestsList.push({
-        id: doc.id,
-        ...doc.data(),
+        if (
+          data.username
+            .toLowerCase()
+            .includes(text.toLowerCase())
+        ) {
+          users.push({
+            id: doc.id,
+            ...data,
+          });
+        }
       });
-    });
 
-    setRequests(requestsList);
-  } catch (error) {
-    console.log(error);
-  }
-};
+      setMatchingUsers(users);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-useEffect(() => {
-  loadFriendRequests();
-}, []);
+  const sendFriendRequest = async (
+    selectedUser
+  ) => {
+    try {
+      const currentUsername = (
+        await AsyncStorage.getItem("loggedInUser")
+      )?.toLowerCase();
+
+      console.log(
+        "CURRENT USER SENDING REQUEST:",
+        currentUsername
+      );
+
+      if (!currentUsername) {
+        Alert.alert(
+          "Error",
+          "No logged in user found."
+        );
+        return;
+      }
+
+      await addDoc(
+        collection(db, "friendRequests"),
+        {
+          from: currentUsername.toLowerCase(),
+          to: selectedUser.username.toLowerCase(),
+          status: "pending",
+          createdAt: new Date(),
+        }
+      );
+
+      Alert.alert(
+        "Sent!",
+        `Friend request sent to ${selectedUser.username}`
+      );
+
+      setShowAddFriendModal(false);
+      setSearchUsername("");
+      setMatchingUsers([]);
+    } catch (error) {
+      console.log(error);
+      Alert.alert(
+        "Error",
+        "Could not send friend request."
+      );
+    }
+  };
+
+  const loadFriendRequests = async () => {
+    try {
+      const currentUsername = (
+        await AsyncStorage.getItem("loggedInUser")
+      )?.toLowerCase();
+
+      console.log(
+        "CURRENT USER VIEWING REQUESTS:",
+        currentUsername
+      );
+
+      if (!currentUsername) return;
+
+      const q = query(
+        collection(db, "friendRequests"),
+        where("to", "==", currentUsername),
+        where("status", "==", "pending")
+      );
+
+      const querySnapshot = await getDocs(q);
+
+      const requestsList = [];
+
+      querySnapshot.forEach((doc) => {
+        requestsList.push({
+          id: doc.id,
+          ...doc.data(),
+        });
+      });
+
+      setRequests(requestsList);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    loadFriendRequests();
+
+    const interval = setInterval(() => {
+      loadFriendRequests();
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const renderFriend = ({ item }) => (
     <TouchableOpacity
@@ -476,13 +510,8 @@ const styles = StyleSheet.create({
     padding: 18,
     borderRadius: 14,
     marginBottom: 14,
-
     borderWidth: 2,
     borderColor: "#4F772D",
-
-    shadowColor: "transparent",
-    elevation: 0,
-
     position: "relative",
   },
 
@@ -498,12 +527,8 @@ const styles = StyleSheet.create({
     padding: 18,
     borderRadius: 14,
     marginBottom: 14,
-
     borderWidth: 2,
     borderColor: "#4F772D",
-
-    shadowColor: "transparent",
-    elevation: 0,
   },
 
   name: {
@@ -524,9 +549,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
     marginRight: 8,
-
-    borderWidth: 2,
-    borderColor: "#4F772D",
   },
 
   rejectButton: {
@@ -535,7 +557,6 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     borderRadius: 10,
     alignItems: "center",
-
     borderWidth: 2,
     borderColor: "#4F772D",
   },
@@ -568,9 +589,6 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderRadius: 12,
     alignItems: "center",
-
-    shadowColor: "transparent",
-    elevation: 0,
   },
 
   addButtonText: {
@@ -591,19 +609,14 @@ const styles = StyleSheet.create({
     width: "88%",
     borderRadius: 22,
     padding: 24,
-
     borderWidth: 2,
     borderColor: "#4F772D",
-
-    shadowColor: "transparent",
-    elevation: 0,
   },
 
   modalTitle: {
     fontSize: 22,
     fontWeight: "700",
     color: "#111827",
-    letterSpacing: -0.5,
   },
 
   modalSubtitle: {
@@ -635,7 +648,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 12,
     marginBottom: 10,
-
     borderWidth: 2,
     borderColor: "#D9F99D",
   },

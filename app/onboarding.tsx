@@ -1,38 +1,32 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Slider from "@react-native-community/slider";
 import * as DocumentPicker from "expo-document-picker";
 import { router } from "expo-router";
 import React, { useState } from "react";
 
 import {
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
 
 import { db } from "../firebase";
 
 import {
-  addDoc,
   collection,
+  addDoc,
   getDocs,
   query,
   where,
 } from "firebase/firestore";
 
-// Safe slider import — falls back to null if the package is missing
-let Slider: any = null;
-try {
-  Slider = require("@react-native-community/slider").default;
-} catch (e) {
-  console.warn("Slider package not found. Run: npx expo install @react-native-community/slider");
-}
-
 export default function OnboardingScreen() {
   const [activeTab, setActiveTab] = useState("login");
+
   const [step, setStep] = useState(1);
 
   const [username, setUsername] = useState("");
@@ -53,7 +47,10 @@ export default function OnboardingScreen() {
     setBudgets({ ...budgets, [category]: value });
   };
 
-  const updateBudgetFromSlider = (category: string, value: number) => {
+  const updateBudgetFromSlider = (
+    category: string,
+    value: number
+  ) => {
     setBudgets({
       ...budgets,
       [category]: Math.round(value).toString(),
@@ -61,25 +58,17 @@ export default function OnboardingScreen() {
   };
 
   const parseCSV = (text: string) => {
-    const lines = text.trim().split(/\r?\n/);
-    const headers = lines[0].split(",").map((h) => h.trim());
+    const lines = text.trim().split("\n");
     const rows = lines.slice(1);
 
     return rows.map((line, index) => {
-      const values = line.split(",").map((v) => v.trim());
-      const row: any = {};
-
-      headers.forEach((header, i) => {
-        row[header.toLowerCase()] = values[i];
-      });
+      const [item, cost, category] = line.split(",");
 
       return {
         id: index + 1,
-        date: row.date || "",
-        time: row.time || "",
-        item: row.item || "",
-        cost: Number(String(row.cost || "0").replace("$", "")),
-        category: row.category || "",
+        item: item.trim(),
+        cost: Number(cost.replace("$", "").trim()),
+        category: category.trim(),
       };
     });
   };
@@ -92,37 +81,60 @@ export default function OnboardingScreen() {
     if (result.canceled) return;
 
     const file = result.assets[0];
+
     setCsvName(file.name);
 
     const response = await fetch(file.uri);
     const text = await response.text();
+
     const parsed = parseCSV(text);
+
     setCsvData(parsed);
   };
 
   const finishOnboarding = async () => {
     try {
-      const formattedUsername = username.trim().toLowerCase();
+      const formattedUsername = username
+        .trim()
+        .toLowerCase();
+
+      const q = query(
+        collection(db, "users"),
+        where("username", "==", formattedUsername)
+      );
+
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        Alert.alert("Error", "Username already exists");
+        return;
+      }
 
       await addDoc(collection(db, "users"), {
         username: formattedUsername,
         password,
       });
 
-      await AsyncStorage.setItem("loggedInUser", formattedUsername);
+      // SAVE USER LOCALLY
+      await AsyncStorage.setItem(
+        "loggedInUser",
+        formattedUsername
+      );
 
       await AsyncStorage.setItem(
         "spendSnitchUserData",
         JSON.stringify({
           username: formattedUsername,
-          goal,
-          budgets,
-          transactions: csvData,
-          privacyKeywords: ["Pharmacy", "Medical", "Health"],
         })
       );
 
+      console.log(
+        "Saved logged in user:",
+        formattedUsername
+      );
+
       router.replace("/(tabs)");
+
     } catch (error) {
       console.log(error);
       Alert.alert("Error", "Could not create account");
@@ -131,7 +143,9 @@ export default function OnboardingScreen() {
 
   const loginUser = async () => {
     try {
-      const formattedUsername = username.trim().toLowerCase();
+      const formattedUsername = username
+        .trim()
+        .toLowerCase();
 
       const q = query(
         collection(db, "users"),
@@ -142,24 +156,33 @@ export default function OnboardingScreen() {
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
-        Alert.alert("Login Failed", "Invalid username or password");
+        Alert.alert(
+          "Login Failed",
+          "Invalid username or password"
+        );
         return;
       }
 
-      await AsyncStorage.setItem("loggedInUser", formattedUsername);
-
-      const existingData = await AsyncStorage.getItem("spendSnitchUserData");
-      const oldData = existingData ? JSON.parse(existingData) : {};
+      // SAVE USER LOCALLY
+      await AsyncStorage.setItem(
+        "loggedInUser",
+        formattedUsername
+      );
 
       await AsyncStorage.setItem(
         "spendSnitchUserData",
         JSON.stringify({
-          ...oldData,
           username: formattedUsername,
         })
       );
 
+      console.log(
+        "Logged in as:",
+        formattedUsername
+      );
+
       router.replace("/(tabs)");
+
     } catch (error) {
       console.log(error);
       Alert.alert("Error", "Login failed");
@@ -174,15 +197,23 @@ export default function OnboardingScreen() {
             style={[styles.tab, styles.inactiveTab]}
             onPress={() => setActiveTab("signup")}
           >
-            <Text style={styles.inactiveTabText}>Sign Up</Text>
+            <Text style={styles.inactiveTabText}>
+              Sign Up
+            </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.tab, styles.activeTab]}>
-            <Text style={styles.activeTabText}>Login</Text>
+          <TouchableOpacity
+            style={[styles.tab, styles.activeTab]}
+          >
+            <Text style={styles.activeTabText}>
+              Login
+            </Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.title}>Welcome Back</Text>
+        <Text style={styles.title}>
+          Welcome Back
+        </Text>
 
         <Text style={styles.subtitle}>
           Log in to continue tracking your spending.
@@ -205,8 +236,13 @@ export default function OnboardingScreen() {
           onChangeText={setPassword}
         />
 
-        <TouchableOpacity style={styles.button} onPress={loginUser}>
-          <Text style={styles.buttonText}>Login</Text>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={loginUser}
+        >
+          <Text style={styles.buttonText}>
+            Login
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -216,19 +252,27 @@ export default function OnboardingScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.tabContainer}>
-          <TouchableOpacity style={[styles.tab, styles.activeTab]}>
-            <Text style={styles.activeTabText}>Sign Up</Text>
+          <TouchableOpacity
+            style={[styles.tab, styles.activeTab]}
+          >
+            <Text style={styles.activeTabText}>
+              Sign Up
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.tab, styles.inactiveTab]}
             onPress={() => setActiveTab("login")}
           >
-            <Text style={styles.inactiveTabText}>Login</Text>
+            <Text style={styles.inactiveTabText}>
+              Login
+            </Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.title}>Create Account</Text>
+        <Text style={styles.title}>
+          Create Account
+        </Text>
 
         <Text style={styles.subtitle}>
           Create an account to start using SpendSnitch.
@@ -254,7 +298,9 @@ export default function OnboardingScreen() {
         <TouchableOpacity
           style={styles.button}
           onPress={async () => {
-            const formattedUsername = username.trim().toLowerCase();
+            const formattedUsername = username
+              .trim()
+              .toLowerCase();
 
             if (!formattedUsername || !password) {
               Alert.alert(
@@ -267,24 +313,39 @@ export default function OnboardingScreen() {
             try {
               const q = query(
                 collection(db, "users"),
-                where("username", "==", formattedUsername)
+                where(
+                  "username",
+                  "==",
+                  formattedUsername
+                )
               );
 
-              const querySnapshot = await getDocs(q);
+              const querySnapshot =
+                await getDocs(q);
 
               if (!querySnapshot.empty) {
-                Alert.alert("Error", "Username already exists");
+                Alert.alert(
+                  "Error",
+                  "Username already exists"
+                );
                 return;
               }
 
               setStep(2);
+
             } catch (error) {
               console.log(error);
-              Alert.alert("Error", "Could not check username");
+
+              Alert.alert(
+                "Error",
+                "Could not check username"
+              );
             }
           }}
         >
-          <Text style={styles.buttonText}>Next</Text>
+          <Text style={styles.buttonText}>
+            Next
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -295,7 +356,9 @@ export default function OnboardingScreen() {
       style={styles.container}
       contentContainerStyle={styles.scrollContent}
     >
-      <Text style={styles.title}>What is your main budgeting goal?</Text>
+      <Text style={styles.title}>
+        What is your main budgeting goal?
+      </Text>
 
       <Text style={styles.subtitle}>
         Tell us what you are saving for right now.
@@ -309,90 +372,99 @@ export default function OnboardingScreen() {
         onChangeText={setGoal}
       />
 
-      <Text style={styles.sectionTitle}>Weekly budget allowance</Text>
+      <Text style={styles.sectionTitle}>
+        Weekly budget allowance
+      </Text>
 
       {Object.keys(budgets).map((category) => {
         const budgetValue =
-          Number(budgets[category as keyof typeof budgets]) || 0;
+          Number(
+            budgets[
+              category as keyof typeof budgets
+            ]
+          ) || 0;
 
         return (
-          <View key={category} style={styles.budgetCard}>
+          <View
+            key={category}
+            style={styles.budgetCard}
+          >
             <View style={styles.budgetHeader}>
-              <Text style={styles.category}>{category}</Text>
+              <Text style={styles.category}>
+                {category}
+              </Text>
 
               <View style={styles.amountBox}>
-                <Text style={styles.dollarSign}>$</Text>
+                <Text style={styles.dollarSign}>
+                  $
+                </Text>
+
                 <TextInput
                   style={styles.amountInput}
                   keyboardType="numeric"
-                  value={budgets[category as keyof typeof budgets]}
-                  onChangeText={(value) => updateBudget(category, value)}
+                  value={
+                    budgets[
+                      category as keyof typeof budgets
+                    ]
+                  }
+                  onChangeText={(value) =>
+                    updateBudget(category, value)
+                  }
                 />
               </View>
             </View>
 
-            {/* Render slider only if package loaded, otherwise show +/- buttons */}
-            {Slider ? (
-              <Slider
-                style={styles.slider}
-                minimumValue={0}
-                maximumValue={300}
-                step={5}
-                value={Math.min(budgetValue, 300)}
-                minimumTrackTintColor="#7CB342"
-                maximumTrackTintColor="#D9EBCB"
-                thumbTintColor="#7CB342"
-                onValueChange={(value: number) =>
-                  updateBudgetFromSlider(category, value)
-                }
-              />
-            ) : (
-              <View style={styles.stepperRow}>
-                <TouchableOpacity
-                  style={styles.stepperButton}
-                  onPress={() =>
-                    updateBudget(
-                      category,
-                      String(Math.max(0, budgetValue - 5))
-                    )
-                  }
-                >
-                  <Text style={styles.stepperButtonText}>−</Text>
-                </TouchableOpacity>
+            <Slider
+              style={styles.slider}
+              minimumValue={0}
+              maximumValue={300}
+              step={5}
+              value={Math.min(budgetValue, 300)}
+              minimumTrackTintColor="#7CB342"
+              maximumTrackTintColor="#D9EBCB"
+              thumbTintColor="#7CB342"
+              onValueChange={(value) =>
+                updateBudgetFromSlider(
+                  category,
+                  value
+                )
+              }
+            />
 
-                <Text style={styles.stepperValue}>${budgetValue} / week</Text>
-
-                <TouchableOpacity
-                  style={styles.stepperButton}
-                  onPress={() =>
-                    updateBudget(category, String(budgetValue + 5))
-                  }
-                >
-                  <Text style={styles.stepperButtonText}>+</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            <Text style={styles.dollarText}>per week</Text>
+            <Text style={styles.dollarText}>
+              per week
+            </Text>
           </View>
         );
       })}
 
-      <Text style={styles.sectionTitle}>Connect your bank account</Text>
-
-      <Text style={styles.bankText}>
-        For this prototype, upload a mock CSV file to simulate bank
-        transactions.
+      <Text style={styles.sectionTitle}>
+        Connect your bank account
       </Text>
 
-      <TouchableOpacity style={styles.bankButton} onPress={uploadCSV}>
+      <Text style={styles.bankText}>
+        For this prototype, upload a mock CSV file
+        to simulate bank transactions.
+      </Text>
+
+      <TouchableOpacity
+        style={styles.bankButton}
+        onPress={uploadCSV}
+      >
         <Text style={styles.bankButtonText}>
-          {csvName ? `Uploaded: ${csvName}` : "Connect bank"}
+          {csvName
+            ? `Uploaded: ${csvName}`
+            : "Upload mock bank CSV"}
         </Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={finishOnboarding}>
-        <Text style={styles.buttonText}>Continue</Text>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={finishOnboarding}
+      >
+        <Text style={styles.buttonText}>
+          Continue
+        </Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -483,119 +555,5 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 17,
     fontWeight: "bold",
-  },
-
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#111827",
-    marginTop: 24,
-    marginBottom: 14,
-  },
-
-  budgetCard: {
-    backgroundColor: "white",
-    borderRadius: 22,
-    padding: 18,
-    marginBottom: 16,
-  },
-
-  budgetHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-
-  category: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#111827",
-  },
-
-  amountBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F3FFE1",
-    borderRadius: 12,
-    paddingHorizontal: 10,
-  },
-
-  dollarSign: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#111827",
-  },
-
-  amountInput: {
-    minWidth: 50,
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#111827",
-    padding: 8,
-  },
-
-  slider: {
-    width: "100%",
-    height: 40,
-  },
-
-  dollarText: {
-    color: "#6B7280",
-    fontSize: 13,
-    marginTop: 4,
-  },
-
-  stepperRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginVertical: 8,
-  },
-
-  stepperButton: {
-    backgroundColor: "#F3FFE1",
-    borderRadius: 12,
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#D9EBCB",
-  },
-
-  stepperButtonText: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#7CB342",
-  },
-
-  stepperValue: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#111827",
-  },
-
-  bankText: {
-    color: "#6B7280",
-    fontSize: 14,
-    marginBottom: 12,
-    lineHeight: 20,
-  },
-
-  bankButton: {
-    backgroundColor: "white",
-    borderRadius: 18,
-    padding: 16,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#8E7DBE",
-    marginBottom: 8,
-  },
-
-  bankButtonText: {
-    color: "#8E7DBE",
-    fontWeight: "bold",
-    fontSize: 15,
   },
 });
