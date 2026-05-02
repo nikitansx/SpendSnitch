@@ -226,7 +226,7 @@ useEffect(() => {
           </Text>
 
           <Text style={styles.subtitle}>
-            Manage your friends and requests 👀
+            Manage your friends and requests
           </Text>
         </View>
 

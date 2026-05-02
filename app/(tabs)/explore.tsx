@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import ViewShot from "react-native-view-shot";
 
-const GEMINI_API_KEY = "AIzaSyA1cVEGI2ol7x2eNGKDKgXT89ghGaokj8A";
+const GEMINI_API_KEY = "AIzaSyAtzYWa-kpLpB_oPtILp1nPYecwBGMbEG4";
 
 export default function AICoachScreen() {
   const [loading, setLoading] = useState(false);
@@ -32,43 +32,45 @@ export default function AICoachScreen() {
           roast: "I need your bank data before I can judge your spending habits 👀",
           pattern: "No mock CSV transactions found yet.",
           problemCategory: "Unknown",
+          numericInsight: "No data to crunch yet.",
+          timeInsight: "Not enough date data yet.",
           tip: "Upload a mock bank CSV first from onboarding or the budgets page.",
         });
         setLoading(false);
         return;
       }
 
-    const prompt = `
-    You are the AI Snitch Coach for a budgeting app called SpendSnitch.
+      const prompt = `
+You are the AI Snitch Coach for a budgeting app called SpendSnitch.
 
-    Your job is to analyse spending data and give feedback that is funny, honest, and useful.
-    Do NOT be overly cringey, overly dramatic, or use too much slang.
-    Use dry humour, not forced Gen Z language. But some Gen Z words are good, just don't overdo it.
+Your job is to analyse spending data and give feedback that is funny, honest, and useful.
+Do NOT be overly cringey, overly dramatic, or use too much slang.
+Use dry humour, not forced Gen Z language. But some Gen Z words are good, just don't overdo it.
 
-    Use this user data:
-    Goal: ${userData.goal}
-    Budgets: ${JSON.stringify(userData.budgets)}
-    Transactions: ${JSON.stringify(userData.transactions)}
+Use this user data:
+Goal: ${userData.goal}
+Budgets: ${JSON.stringify(userData.budgets)}
+Transactions: ${JSON.stringify(userData.transactions)}
 
-    Return ONLY valid JSON in this exact format:
-    {
-      "personality": "short spending personality name",
-      "roast": "one funny but not cruel roast based on the data",
-      "pattern": "specific spending pattern using the transaction data",
-      "problemCategory": "one category only",
-      "numericInsight": "one numeric insight, e.g. amount over budget or what the overspend could have bought instead",
-      "timeInsight": "one time/date insight if dates exist, otherwise say not enough date data yet",
-      "tip": "one practical saving tip"
-    }
+Return ONLY valid JSON in this exact format:
+{
+  "personality": "short spending personality name",
+  "roast": "one funny but not cruel roast based on the data",
+  "pattern": "specific spending pattern using the transaction data",
+  "problemCategory": "one category only",
+  "numericInsight": "one numeric insight, e.g. amount over budget or what the overspend could have bought instead (like you could have bought 5 coffees instead)",
+  "timeInsight": "one time/date insight if dates exist, otherwise say not enough date data yet",
+  "tip": "one practical saving tip"
+}
 
-    Rules:
-    - Keep each answer 1 sentence only.
-    - Be specific with numbers where possible.
-    - Mention the user's goal if relevant.
-    - Roast should be playful, not embarrassing.
-    - Avoid phrases like 'slay', 'bestie', 'wallet crying', or 'financial villain'.
-    - If the user is under budget, acknowledge that honestly.
-    `;
+Rules:
+- Keep each answer 1 sentence only.
+- Be specific with numbers where possible.
+- Mention the user's goal if relevant.
+- Roast should be playful, not embarrassing.
+- Avoid phrases like slay, bestie, wallet crying, or financial villain.
+- If the user is under budget, acknowledge that honestly.
+`;
 
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
@@ -89,21 +91,39 @@ export default function AICoachScreen() {
 
       const data = await response.json();
 
+      console.log("Gemini response:", JSON.stringify(data, null, 2));
+
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-      if (!text) throw new Error("No AI response");
+      if (!text) {
+        console.log("No text in response. Full data:", JSON.stringify(data));
+        throw new Error("No AI response text");
+      }
 
       const cleaned = text.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(cleaned);
+
+      const jsonStart = cleaned.indexOf("{");
+      const jsonEnd = cleaned.lastIndexOf("}");
+
+      if (jsonStart === -1 || jsonEnd === -1) {
+        console.log("No JSON found in text:", cleaned);
+        throw new Error("No JSON in response");
+      }
+
+      const jsonString = cleaned.slice(jsonStart, jsonEnd + 1);
+      const parsed = JSON.parse(jsonString);
 
       setReport(parsed);
     } catch (error) {
+      console.log("AI analysis error:", error);
       setReport({
-        personality: "AI Confused Bestie",
+        personality: "AI Confused Spender",
         roast: "The AI tripped over your transactions. Very on brand.",
         pattern: "Something went wrong while analysing your spending.",
         problemCategory: "Error",
-        tip: "Check your API key and uploaded CSV.",
+        numericInsight: "Could not calculate.",
+        timeInsight: "Could not determine.",
+        tip: "Check your internet connection and try again.",
       });
     }
 
@@ -153,7 +173,7 @@ export default function AICoachScreen() {
             options={{ format: "png", quality: 1 }}
           >
             <View style={styles.shareImageCard}>
-              <Text style={styles.reportTitle}>SpendSnitch AI Report 👀</Text>
+              <Text style={styles.reportTitle}>SpendSnitch AI Report </Text>
 
               <View style={styles.card}>
                 <Text style={styles.cardLabel}>Spending Personality</Text>
@@ -196,13 +216,8 @@ export default function AICoachScreen() {
             </View>
           </ViewShot>
 
-          <TouchableOpacity
-            style={styles.shareButton}
-            onPress={shareReport}
-          >
-            <Text style={styles.shareButtonText}>
-              Share
-            </Text>
+          <TouchableOpacity style={styles.shareButton} onPress={shareReport}>
+            <Text style={styles.shareButtonText}>Share</Text>
           </TouchableOpacity>
         </>
       )}

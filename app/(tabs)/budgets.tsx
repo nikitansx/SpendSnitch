@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as DocumentPicker from "expo-document-picker";
 import React, { useEffect, useState } from "react";
 import {
+  Alert,
   Modal,
   ScrollView,
   StyleSheet,
@@ -73,38 +74,51 @@ export default function BudgetsScreen() {
     await saveUserData({ budgets: updatedBudgets });
   };
 
-  const parseCSV = (text: string) => {
-    const lines = text.trim().split("\n");
-    const rows = lines.slice(1);
+const parseCSV = (text: string) => {
+  const lines = text.trim().split(/\r?\n/);
+  const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
+  const rows = lines.slice(1);
 
-    return rows.map((line, index) => {
-      const [item, cost, category] = line.split(",");
+  return rows.map((line, index) => {
+    const values = line.split(",").map((v) => v.trim());
+    const row: any = {};
 
-      return {
-        id: index + 1,
-        item: item.trim(),
-        cost: Number(cost.replace("$", "").trim()),
-        category: category.trim(),
-      };
-    });
-  };
-
-  const changeBankCSV = async () => {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: "text/csv",
+    headers.forEach((header, i) => {
+      row[header] = values[i] || "";
     });
 
-    if (result.canceled) return;
+    return {
+      id: index + 1,
+      date: row.date || "",
+      time: row.time || "",
+      item: row.item || "",
+      cost: Number(String(row.cost || "0").replace("$", "")),
+      category: row.category || "",
+    };
+  });
+};
 
-    const file = result.assets[0];
+const changeBankCSV = async () => {
+  const result = await DocumentPicker.getDocumentAsync({
+    type: "text/csv",
+  });
 
-    const response = await fetch(file.uri);
-    const text = await response.text();
-    const parsed = parseCSV(text);
+  if (result.canceled) return;
 
-    setTransactions(parsed);
-    await saveUserData({ transactions: parsed });
-  };
+  const file = result.assets[0];
+
+  const response = await fetch(file.uri);
+  const text = await response.text();
+  const parsed = parseCSV(text);
+
+  setTransactions(parsed);
+
+  await saveUserData({
+    transactions: parsed,
+  });
+
+  Alert.alert("Bank updated", "Your mock bank transactions have been updated.");
+};
 
   const addPrivacyKeyword = async () => {
     if (customKeyword.trim() === "") return;
