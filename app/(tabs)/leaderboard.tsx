@@ -372,29 +372,31 @@ const styles = StyleSheet.create({
   page: { backgroundColor: "#F3FFE1", padding: 24 },
 
   header: { marginBottom: 12 },
-  title: { fontSize: 34, fontWeight: "700" },
-  italic: { fontStyle: "italic", color: "#4F772D" },
-  date: { fontSize: 13, color: "#8a9e8f", marginTop: 4 },
+  title: { fontSize: 34, fontWeight: "700", color: "#2E1F3E" },
+  italic: { fontStyle: "italic", color: "#8E7DBE" },
+  date: { fontSize: 13, color: "#8E7DBE", marginTop: 4 },
 
-  sectionHeader: { fontSize: 15, color: "#8a9e8f", fontWeight: "500", marginBottom: 12, marginTop: 8 },
+  sectionHeader: { fontSize: 15, color: "#8E7DBE", fontWeight: "500", marginBottom: 12, marginTop: 8 },
 
   tabs: {
     flexDirection: "row",
     marginBottom: 24,
-    backgroundColor: "#D9F7A9",
+    backgroundColor: "#C9B6E4",
     borderRadius: 12,
     padding: 4,
   },
   tab: { padding: 8, borderRadius: 10, flex: 1, alignItems: "center" },
   tabActive: { backgroundColor: "#fff" },
-  tabText: { fontSize: 13, color: "#8a9e8f" },
-  tabTextActive: { color: "#4F772D", fontWeight: "600" },
+  tabText: { fontSize: 13, color: "#8E7DBE" },
+  tabTextActive: { color: "#2E1F3E", fontWeight: "600" },
 
   podium: {
     backgroundColor: "#fff",
     borderRadius: 24,
     padding: 30,
     marginBottom: 24,
+    borderTopWidth: 3,
+    borderTopColor: "#F2D16B",
   },
   podiumRow: {
     flexDirection: "row",
@@ -405,11 +407,11 @@ const styles = StyleSheet.create({
 
   podItem: { alignItems: "center" },
   podMeta: { marginTop: 12, marginBottom: 16, alignItems: "center" },
-  podName: { fontSize: 16, fontWeight: "600", marginBottom: 2 },
-  podSub: { fontSize: 14, color: "#8a9e8f" },
-  podLabel: { fontSize: 12, color: "#8a9e8f", fontWeight: "400" },
-  podGoal: { fontSize: 11, color: "#8a9e8f", marginTop: 2, fontStyle: "italic" },
-  podActual: { fontSize: 11, color: "#4F772D", marginTop: 1, fontWeight: "600" },
+  podName: { fontSize: 16, fontWeight: "600", marginBottom: 2, color: "#2E1F3E" },
+  podSub: { fontSize: 14, color: "#8E7DBE" },
+  podLabel: { fontSize: 12, color: "#8E7DBE", fontWeight: "400" },
+  podGoal: { fontSize: 11, color: "#8E7DBE", marginTop: 2, fontStyle: "italic" },
+  podActual: { fontSize: 11, color: "#F6C1A6", marginTop: 1, fontWeight: "600" },
 
   avatar: {
     width: 52,
@@ -424,7 +426,7 @@ const styles = StyleSheet.create({
   bar1: {
     width: 100,
     height: 180,
-    backgroundColor: "#A9E34B",
+    backgroundColor: "#F2D16B",
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
@@ -432,7 +434,7 @@ const styles = StyleSheet.create({
   bar2: {
     width: 90,
     height: 120,
-    backgroundColor: "#3d5f47",
+    backgroundColor: "#E8C958",
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
@@ -440,13 +442,13 @@ const styles = StyleSheet.create({
   bar3: {
     width: 80,
     height: 70,
-    backgroundColor: "#FFE08A",
+    backgroundColor: "#F2D16B",
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
   },
 
-  barText: { color: "#fff", fontWeight: "700", fontSize: 28 },
+  barText: { color: "#2E1F3E", fontWeight: "700", fontSize: 28 },
 
   leaderboardList: { marginBottom: 8 },
 
@@ -468,9 +470,9 @@ const styles = StyleSheet.create({
   sub: { fontSize: 12, color: "#8a9e8f", marginTop: 3 },
   reason: { fontSize: 11, color: "#c0443a", marginTop: 5, fontStyle: "italic", fontWeight: "500" },
 
-  punSection: { marginTop: 24, borderTopWidth: 2, borderTopColor: "#D9F7A9", paddingTop: 24, marginBottom: 40 },
-  punTitle: { fontSize: 28, fontWeight: "700", marginBottom: 6 },
-  punTitleAccent: { fontStyle: "italic", color: "#c0443a" },
+  punSection: { marginTop: 24, borderTopWidth: 2, borderTopColor: "#C9B6E4", paddingTop: 24, marginBottom: 40 },
+  punTitle: { fontSize: 28, fontWeight: "700", marginBottom: 6, color: "#2E1F3E" },
+  punTitleAccent: { fontStyle: "italic", color: "#E8A8A8" },
   punSub: { fontSize: 15, color: "#1a2418", marginBottom: 24 },
 
   punPlayerGroup: { marginBottom: 32 },
@@ -534,20 +536,20 @@ const styles = StyleSheet.create({
   punVotes: { fontSize: 12, color: "#8a9e8f", marginRight: 8, minWidth: 20, textAlign: "center" },
 
   punVoteBtn: {
-    backgroundColor: "#D9F7A9",
+    backgroundColor: "#F4D6D6",
     borderWidth: 1,
-    borderColor: "#A9E34B",
+    borderColor: "#F4D6D6",
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
   },
 
   punVoteBtnVoted: {
-    backgroundColor: "#4F772D",
-    borderColor: "#4F772D",
+    backgroundColor: "#2E1F3E",
+    borderColor: "#2E1F3E",
   },
 
-  punVoteBtnText: { color: "#4F772D", fontSize: 13, fontWeight: "600" },
+  punVoteBtnText: { color: "#2E1F3E", fontSize: 13, fontWeight: "600" },
 
   punStatusPending: {
     backgroundColor: "#FFF0E6",
