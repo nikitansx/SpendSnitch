@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as DocumentPicker from "expo-document-picker";
 import React, { useEffect, useState } from "react";
 import {
   ScrollView,
@@ -60,18 +61,87 @@ export default function BudgetsScreen() {
       .reduce((total, item) => total + Number(item.cost), 0);
   };
 
+  const parseCSV = (text: string) => {
+    const lines = text.trim().split("\n");
+    const rows = lines.slice(1);
+
+    return rows.map((line, index) => {
+      const [item, cost, category] = line.split(",");
+
+      return {
+        id: index + 1,
+        item: item.trim(),
+        cost: Number(cost.replace("$", "").trim()),
+        category: category.trim(),
+      };
+    });
+  };
+
+  const changeBankCSV = async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: "text/csv",
+    });
+
+    if (result.canceled) return;
+
+    const file = result.assets[0];
+
+    const response = await fetch(file.uri);
+    const text = await response.text();
+
+    const parsed = parseCSV(text);
+
+    setTransactions(parsed);
+
+    const saved = await AsyncStorage.getItem("spendSnitchUserData");
+    const oldData = saved ? JSON.parse(saved) : {};
+
+    await AsyncStorage.setItem(
+      "spendSnitchUserData",
+      JSON.stringify({
+        ...oldData,
+        transactions: parsed,
+      })
+    );
+  };
+
   const categories = ["Food", "Shopping", "Travel", "Entertainment"];
 
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Your Budgets</Text>
 
-      <View style={styles.goalCard}>
-        <Text style={styles.goalLabel}>Main budgeting goal</Text>
-        <Text style={styles.goalText}>
-          {goal ? goal : "No goal added yet"}
-        </Text>
-      </View>
+    <View style={styles.goalCard}>
+      <Text style={styles.goalLabel}>Main budgeting goal</Text>
+
+      <TextInput
+        style={styles.goalInput}
+        value={goal}
+        placeholder="No goal added yet"
+        placeholderTextColor="#9CA3AF"
+        onChangeText={async (value) => {
+          setGoal(value);
+
+          const saved = await AsyncStorage.getItem("spendSnitchUserData");
+          const oldData = saved ? JSON.parse(saved) : {};
+
+          await AsyncStorage.setItem(
+            "spendSnitchUserData",
+            JSON.stringify({
+              ...oldData,
+              goal: value,
+            })
+          );
+        }}
+      />
+    </View>
+
+      <TouchableOpacity
+        style={styles.changeBankButton}
+        onPress={changeBankCSV}
+      >
+        <Text style={styles.changeBankText}>Change linked bank</Text>
+      </TouchableOpacity>
 
       <Text style={styles.sectionTitle}>Weekly allowances</Text>
 
@@ -116,24 +186,26 @@ export default function BudgetsScreen() {
 
             {overBudget && (
               <Text style={styles.warning}>
-                Snitch alert: you went over your {category} budget 👀
+                You've been snitched on: you went over your {category} budget 👀
               </Text>
             )}
           </View>
         );
       })}
 
-      <Text style={styles.sectionTitle}>Mock bank transactions</Text>
+      <Text style={styles.sectionTitle}>Bank transactions</Text>
 
       {transactions.length === 0 ? (
         <Text style={styles.emptyText}>
-          No CSV uploaded yet. Upload mock bank data during onboarding.
+          No CSV uploaded yet.
         </Text>
       ) : (
         transactions.map((transaction) => (
           <View key={transaction.id} style={styles.transactionCard}>
             <View>
-              <Text style={styles.transactionItem}>{transaction.item}</Text>
+              <Text style={styles.transactionItem}>
+                {transaction.item}
+              </Text>
               <Text style={styles.transactionCategory}>
                 {transaction.category}
               </Text>
@@ -146,7 +218,10 @@ export default function BudgetsScreen() {
         ))
       )}
 
-      <TouchableOpacity style={styles.reloadButton} onPress={loadData}>
+      <TouchableOpacity
+        style={styles.reloadButton}
+        onPress={loadData}
+      >
         <Text style={styles.reloadButtonText}>Refresh budgets</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -172,7 +247,14 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 22,
     padding: 20,
-    marginBottom: 24,
+    marginBottom: 14,
+  },
+
+  goalInput: {
+  color: "#111827",
+  fontSize: 22,
+  fontWeight: "bold",
+  padding: 0,
   },
 
   goalLabel: {
@@ -185,6 +267,23 @@ const styles = StyleSheet.create({
     color: "#111827",
     fontSize: 22,
     fontWeight: "bold",
+  },
+
+  changeBankButton: {
+    alignSelf: "flex-end",
+    backgroundColor: "white",
+    borderRadius: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    marginBottom: 18,
+    borderWidth: 1,
+    borderColor: "#D9EBCB",
+  },
+
+  changeBankText: {
+    color: "#7CB342",
+    fontWeight: "600",
+    fontSize: 13,
   },
 
   sectionTitle: {

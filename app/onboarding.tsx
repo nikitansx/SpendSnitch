@@ -173,7 +173,7 @@ export default function OnboardingScreen() {
 
       <TouchableOpacity style={styles.bankButton} onPress={uploadCSV}>
         <Text style={styles.bankButtonText}>
-          {csvName ? `Uploaded: ${csvName}` : "Upload mock bank CSV"}
+          {csvName ? `Uploaded: ${csvName}` : "Connect Bank"}
         </Text>
       </TouchableOpacity>
 
