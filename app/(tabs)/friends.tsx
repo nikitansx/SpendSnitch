@@ -1,24 +1,24 @@
-import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useEffect, useState } from "react";
 import { db } from "../../firebase";
 
 import {
-  collection,
   addDoc,
+  collection,
+  getDocs,
   query,
   where,
-  getDocs,
 } from "firebase/firestore";
 
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
+  Alert,
   FlatList,
   Modal,
+  StyleSheet,
+  Text,
   TextInput,
-  Alert,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -559,7 +559,7 @@ const styles = StyleSheet.create({
     bottom: 30,
     left: 24,
     right: 24,
-    backgroundColor: "#4F772D",
+    backgroundColor: "#8E7DBE",
     paddingVertical: 15,
     borderRadius: 12,
     alignItems: "center",
