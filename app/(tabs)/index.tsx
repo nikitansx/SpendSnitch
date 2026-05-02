@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import {
   View,
   Text,
@@ -8,6 +9,7 @@ import {
   Modal,
   TextInput,
 } from "react-native";
+import { router } from "expo-router";
 
 export default function HomeScreen() {
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
@@ -57,31 +59,44 @@ export default function HomeScreen() {
     "Iconic purchase",
   ];
 
-const sendQuickMessage = (message: string) => {
-  setSentMessage(`Sent! 🎉`);
+  const sendQuickMessage = () => {
+    setSentMessage("Sent! 🎉");
 
-  setTimeout(() => {
-    setSelectedAlert(null);
-    setSentMessage("");
-  }, 2000);
-};
+    setTimeout(() => {
+      setSelectedAlert(null);
+      setSentMessage("");
+    }, 2000);
+  };
 
-const sendCustomMessage = () => {
-  if (customMessage.trim() === "") return;
+  const sendCustomMessage = () => {
+    if (customMessage.trim() === "") return;
 
-  setSentMessage("Message sent! 🎉");
+    setSentMessage("Message sent! 🎉");
 
-  setTimeout(() => {
-    setSelectedAlert(null);
-    setCustomMessage("");
-    setSentMessage("");
-  }, 2000);
-};
+    setTimeout(() => {
+      setSelectedAlert(null);
+      setCustomMessage("");
+      setSentMessage("");
+    }, 2000);
+  };
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView style={styles.container}>
-        <Text style={styles.logo}>Spend Snitch</Text>
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.headerRow}>
+          <Text style={styles.logo}>Spend Snitch</Text>
+
+          <TouchableOpacity
+            style={styles.settingsButton}
+            activeOpacity={0.8}
+            onPress={() => router.push("/settings")}
+          >
+            <Ionicons name="settings-outline" size={22} color="#4F772D" />
+          </TouchableOpacity>
+        </View>
 
         <Text style={styles.subtitle}>
           Recent snitch alerts from your friends 👀
@@ -92,6 +107,7 @@ const sendCustomMessage = () => {
             key={alert.id}
             style={styles.alertCard}
             onPress={() => setSelectedAlert(alert)}
+            activeOpacity={0.9}
           >
             <View style={styles.topRow}>
               <Text style={styles.friendName}>{alert.name}</Text>
@@ -125,7 +141,8 @@ const sendCustomMessage = () => {
                   <TouchableOpacity
                     key={index}
                     style={styles.quickMessage}
-                    onPress={() => sendQuickMessage(msg)}
+                    onPress={() => sendQuickMessage()}
+                    activeOpacity={0.9}
                   >
                     <Text style={styles.quickMessageText}>{msg}</Text>
                   </TouchableOpacity>
@@ -142,6 +159,7 @@ const sendCustomMessage = () => {
                 <TouchableOpacity
                   style={styles.sendButton}
                   onPress={sendCustomMessage}
+                  activeOpacity={0.9}
                 >
                   <Text style={styles.sendButtonText}>Send</Text>
                 </TouchableOpacity>
@@ -150,7 +168,7 @@ const sendCustomMessage = () => {
                   <View style={styles.sentBox}>
                     <Text style={styles.sentText}>{sentMessage}</Text>
                   </View>
-                  ) : null}
+                ) : null}
 
                 <TouchableOpacity
                   onPress={() => setSelectedAlert(null)}
@@ -173,25 +191,47 @@ const styles = StyleSheet.create({
     padding: 24,
   },
 
-  logo: {
-    fontSize: 38,
-    fontWeight: "bold",
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginTop: 60,
-    color: "#111827",
   },
 
+  logo: {
+    fontSize: 34,
+    fontWeight: "700",
+    color: "#0F172A",
+    letterSpacing: -1.2,
+  },
+
+settingsButton: {
+  backgroundColor: "#FFFFFF",
+  width: 42,
+  height: 42,
+  borderRadius: 12,
+  borderWidth: 2,
+  borderColor: "#4F772D",
+  alignItems: "center",
+  justifyContent: "center",
+},
+
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: "#6B7280",
-    marginTop: 10,
-    marginBottom: 30,
+    marginTop: 8,
+    marginBottom: 28,
   },
 
   alertCard: {
-    backgroundColor: "white",
-    borderRadius: 22,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
     padding: 20,
     marginBottom: 18,
+    borderWidth: 2,
+    borderColor: "#4F772D",
+    shadowColor: "transparent",
+    elevation: 0,
   },
 
   topRow: {
@@ -201,53 +241,57 @@ const styles = StyleSheet.create({
   },
 
   friendName: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#111827",
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#0F172A",
   },
 
   time: {
-    fontSize: 13,
+    fontSize: 12,
     color: "#9CA3AF",
   },
 
   alertText: {
-    fontSize: 16,
+    fontSize: 15,
     lineHeight: 24,
     color: "#374151",
   },
 
   bold: {
-    fontWeight: "bold",
-    color: "#F97316",
+    fontWeight: "700",
+    color: "#4F772D",
   },
 
   modalBackground: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.35)",
+    backgroundColor: "rgba(0,0,0,0.3)",
   },
 
   modalContainer: {
-    backgroundColor: "white",
-    height: "80%",
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    padding: 24,
+    backgroundColor: "#FFFFFF",
+    flex: 1,
+    marginTop: 220,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    paddingTop: 28,
+    paddingHorizontal: 24,
+    paddingBottom: 40,
   },
 
   modalTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: 22,
+    fontWeight: "700",
     marginBottom: 20,
     color: "#111827",
+    letterSpacing: -0.5,
   },
 
   quickMessage: {
-    backgroundColor: "#FFF7ED",
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 12,
+    backgroundColor: "#F3FFE1",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
   },
 
   quickMessageText: {
@@ -257,48 +301,50 @@ const styles = StyleSheet.create({
   },
 
   input: {
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 16,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 10,
     padding: 16,
-    marginTop: 12,
-    fontSize: 16,
+    marginTop: 14,
+    fontSize: 15,
+    color: "#111827",
   },
 
   sendButton: {
-    backgroundColor: "#F97316",
-    padding: 16,
-    borderRadius: 18,
-    marginTop: 16,
+    backgroundColor: "#4F772D",
+    padding: 15,
+    borderRadius: 12,
+    marginTop: 14,
     alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#4F772D",
   },
 
   sendButtonText: {
     color: "white",
-    fontWeight: "bold",
-    fontSize: 16,
+    fontWeight: "700",
+    fontSize: 15,
+  },
+
+  sentBox: {
+    backgroundColor: "#DCFCE7",
+    padding: 14,
+    borderRadius: 10,
+    marginTop: 18,
+    alignItems: "center",
   },
 
   sentText: {
     textAlign: "center",
-    marginTop: 16,
-    color: "#16A34A",
-    fontWeight: "bold",
-    fontSize: 16,
+    color: "#15803D",
+    fontWeight: "700",
+    fontSize: 15,
   },
-
-  sentBox: {
-  backgroundColor: "#DCFCE7",
-  padding: 14,
-  borderRadius: 14,
-  marginTop: 18,
-  alignItems: "center",
-},
 
   closeText: {
     textAlign: "center",
     marginTop: 20,
     color: "#9CA3AF",
-    fontSize: 15,
+    fontSize: 14,
+    fontWeight: "500",
   },
 });
