@@ -45,13 +45,18 @@ const [requests, setRequests] = useState([]);
 
   const [editMode, setEditMode] = useState(false);
 
-  const acceptRequest = (request) => {
-    setFriends([...friends, request]);
-
-    setRequests(
-      requests.filter((r) => r.id !== request.id)
-    );
+const acceptRequest = (request) => {
+  const newFriend = {
+    id: request.id,
+    username: request.from,
   };
+
+  setFriends([...friends, newFriend]);
+
+  setRequests(
+    requests.filter((r) => r.id !== request.id)
+  );
+};
 
   const rejectRequest = (id) => {
     setRequests(

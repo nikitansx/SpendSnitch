@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
   Alert,
+  Image,
 } from "react-native";
 
 import { router } from "expo-router";
@@ -22,17 +23,19 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
+import * as ImagePicker from "expo-image-picker";
+
 import { db } from "../../firebase";
 
 export default function HomeScreen() {
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
   const [customMessage, setCustomMessage] = useState("");
-  const [sentMessage, setSentMessage] = useState("");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const alerts = [
     {
       id: 1,
-      username: "natasha",
+      username: "@natasha",
       category: "Food",
       amount: "$100",
       place: "Mama Brown",
@@ -40,7 +43,7 @@ export default function HomeScreen() {
     },
     {
       id: 2,
-      username: "mia",
+      username: "@mia",
       category: "Shopping",
       amount: "$240",
       place: "Zara",
@@ -48,7 +51,7 @@ export default function HomeScreen() {
     },
     {
       id: 3,
-      username: "liam",
+      username: "@liam",
       category: "Entertainment",
       amount: "$85",
       place: "Event Cinemas",
@@ -56,7 +59,7 @@ export default function HomeScreen() {
     },
     {
       id: 4,
-      username: "sophie",
+      username: "@sophie",
       category: "Coffee",
       amount: "$32",
       place: "Starbucks",
@@ -65,12 +68,46 @@ export default function HomeScreen() {
   ];
 
   const quickMessages = [
-    "Come on 😭",
+    "Are you serious?",
     "You can do better than that!",
-    "Worth it honestly 👀",
+    "Worth it honestly",
     "That was NOT in the budget",
     "Iconic purchase",
   ];
+
+  const resetModal = () => {
+    setSelectedAlert(null);
+    setCustomMessage("");
+    setSelectedImage(null);
+  };
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0].uri);
+    }
+  };
+
+  const takePhoto = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+
+    if (!permission.granted) {
+      Alert.alert("Camera permission required");
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0].uri);
+    }
+  };
 
   const sendQuickMessage = async (message: string) => {
     try {
@@ -81,61 +118,77 @@ export default function HomeScreen() {
         return;
       }
 
-      console.log("Sending from:", currentUser);
-
       await addDoc(collection(db, "reactions"), {
-        toUser: selectedAlert.username.toLowerCase().trim(),
+        toUser: selectedAlert.username
+          .replace("@", "")
+          .toLowerCase()
+          .trim(),
         fromUser: currentUser.toLowerCase().trim(),
         message: message,
         category: selectedAlert.category,
         place: selectedAlert.place,
+        hasImage: false,
         createdAt: serverTimestamp(),
       });
 
-      setSentMessage("Sent! 🎉");
+      resetModal();
 
-      setTimeout(() => {
-        setSelectedAlert(null);
-        setSentMessage("");
-      }, 2000);
+      Alert.alert("Success", "Reaction sent!");
 
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
+
+      Alert.alert(
+        "Firebase Error",
+        JSON.stringify(error)
+      );
     }
   };
 
   const sendCustomMessage = async () => {
-    if (customMessage.trim() === "") return;
+    if (customMessage.trim() === "" && !selectedImage) {
+      Alert.alert(
+        "Error",
+        "Write a message or attach a photo"
+      );
+      return;
+    }
 
     try {
       const currentUser = await AsyncStorage.getItem("loggedInUser");
 
       if (!currentUser) {
-        Alert.alert("Error", "No logged in user found");
+        Alert.alert(
+          "Error",
+          "No logged in user found"
+        );
         return;
       }
 
-      console.log("Sending from:", currentUser);
-
       await addDoc(collection(db, "reactions"), {
-        toUser: selectedAlert.username.toLowerCase().trim(),
+        toUser: selectedAlert.username
+          .replace("@", "")
+          .toLowerCase()
+          .trim(),
         fromUser: currentUser.toLowerCase().trim(),
         message: customMessage,
         category: selectedAlert.category,
         place: selectedAlert.place,
+        hasImage: selectedImage ? true : false,
         createdAt: serverTimestamp(),
       });
 
-      setSentMessage("Message sent! 🎉");
+      resetModal();
 
-      setTimeout(() => {
-        setSelectedAlert(null);
-        setCustomMessage("");
-        setSentMessage("");
-      }, 2000);
+      Alert.alert("Success", "Message sent!");
 
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
+
+      Alert.alert(
+        "Firebase Error",
+        JSON.stringify(error)
+      );
     }
   };
 
@@ -162,7 +215,7 @@ export default function HomeScreen() {
         </View>
 
         <Text style={styles.subtitle}>
-          Recent snitch alerts from your friends 👀
+          Recent snitch alerts from your friends
         </Text>
 
         {alerts.map((alert) => (
@@ -206,11 +259,16 @@ export default function HomeScreen() {
         animationType="slide"
       >
         <View style={styles.modalBackground}>
-          <View style={styles.modalContainer}>
+          <ScrollView
+            style={styles.modalContainer}
+            contentContainerStyle={{ paddingBottom: 40 }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
             {selectedAlert && (
               <>
                 <Text style={styles.modalTitle}>
-                  React to {selectedAlert.username}'s spend 👀
+                  React to {selectedAlert.username}'s spend
                 </Text>
 
                 {quickMessages.map((msg, index) => (
@@ -234,6 +292,47 @@ export default function HomeScreen() {
                   onChangeText={setCustomMessage}
                 />
 
+                <View style={styles.imageButtonsRow}>
+                  <TouchableOpacity
+                    style={styles.imageButton}
+                    onPress={pickImage}
+                    activeOpacity={0.9}
+                  >
+                    <Ionicons
+                      name="image-outline"
+                      size={20}
+                      color="#4F772D"
+                    />
+
+                    <Text style={styles.imageButtonText}>
+                      Upload Photo
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.imageButton}
+                    onPress={takePhoto}
+                    activeOpacity={0.9}
+                  >
+                    <Ionicons
+                      name="camera-outline"
+                      size={20}
+                      color="#4F772D"
+                    />
+
+                    <Text style={styles.imageButtonText}>
+                      Take Photo
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {selectedImage && (
+                  <Image
+                    source={{ uri: selectedImage }}
+                    style={styles.previewImage}
+                  />
+                )}
+
                 <TouchableOpacity
                   style={styles.sendButton}
                   onPress={sendCustomMessage}
@@ -244,16 +343,8 @@ export default function HomeScreen() {
                   </Text>
                 </TouchableOpacity>
 
-                {sentMessage !== "" ? (
-                  <View style={styles.sentBox}>
-                    <Text style={styles.sentText}>
-                      {sentMessage}
-                    </Text>
-                  </View>
-                ) : null}
-
                 <TouchableOpacity
-                  onPress={() => setSelectedAlert(null)}
+                  onPress={resetModal}
                 >
                   <Text style={styles.closeText}>
                     Close
@@ -261,7 +352,7 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               </>
             )}
-          </View>
+          </ScrollView>
         </View>
       </Modal>
     </View>
@@ -314,8 +405,6 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     borderWidth: 2,
     borderColor: "#4F772D",
-    shadowColor: "transparent",
-    elevation: 0,
   },
 
   topRow: {
@@ -355,7 +444,7 @@ const styles = StyleSheet.create({
   modalContainer: {
     backgroundColor: "#FFFFFF",
     flex: 1,
-    marginTop: 220,
+    marginTop: 65,
     borderTopLeftRadius: 22,
     borderTopRightRadius: 22,
     paddingTop: 28,
@@ -368,7 +457,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 20,
     color: "#111827",
-    letterSpacing: -0.5,
   },
 
   quickMessage: {
@@ -393,11 +481,40 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
+  imageButtonsRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 14,
+  },
+
+  imageButton: {
+    flex: 1,
+    backgroundColor: "#F3FFE1",
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+
+  imageButtonText: {
+    fontWeight: "700",
+    color: "#4F772D",
+    fontSize: 14,
+  },
+
+  previewImage: {
+    width: "100%",
+    height: 220,
+    borderRadius: 14,
+    marginTop: 16,
+  },
+
   sendButton: {
     backgroundColor: "#4F772D",
     padding: 15,
     borderRadius: 12,
-    marginTop: 14,
+    marginTop: 16,
     alignItems: "center",
     borderWidth: 2,
     borderColor: "#4F772D",
@@ -405,21 +522,6 @@ const styles = StyleSheet.create({
 
   sendButtonText: {
     color: "white",
-    fontWeight: "700",
-    fontSize: 15,
-  },
-
-  sentBox: {
-    backgroundColor: "#DCFCE7",
-    padding: 14,
-    borderRadius: 10,
-    marginTop: 18,
-    alignItems: "center",
-  },
-
-  sentText: {
-    textAlign: "center",
-    color: "#15803D",
     fontWeight: "700",
     fontSize: 15,
   },

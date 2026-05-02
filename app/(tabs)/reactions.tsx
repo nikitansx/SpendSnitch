@@ -5,6 +5,8 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Image,
+  Modal,
 } from "react-native";
 
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -17,13 +19,13 @@ import {
   getDocs,
   query,
   where,
-  orderBy,
 } from "firebase/firestore";
 
 import { db } from "../../firebase";
 
 export default function ReactionsScreen() {
   const [reactions, setReactions] = useState<any[]>([]);
+  const [showMeme, setShowMeme] = useState(false);
 
   useEffect(() => {
     loadReactions();
@@ -39,13 +41,7 @@ export default function ReactionsScreen() {
     try {
       const currentUser = await AsyncStorage.getItem("loggedInUser");
 
-      //console.log("Current logged in user:", currentUser);
-
-      console.log("CURRENT USER:");
-      console.log(currentUser);
-
       if (!currentUser) {
-        console.log("No logged in user");
         return;
       }
 
@@ -67,8 +63,6 @@ export default function ReactionsScreen() {
         });
       });
 
-      console.log("Loaded reactions:", reactionsData);
-
       setReactions(reactionsData);
 
     } catch (error) {
@@ -84,16 +78,22 @@ export default function ReactionsScreen() {
           style={styles.backButton}
           activeOpacity={0.8}
         >
-          <Ionicons name="chevron-back" size={24} color="#4F772D" />
+          <Ionicons
+            name="chevron-back"
+            size={24}
+            color="#4F772D"
+          />
         </TouchableOpacity>
 
-        <Text style={styles.title}>Reactions</Text>
+        <Text style={styles.title}>
+          Reactions
+        </Text>
 
         <View style={{ width: 40 }} />
       </View>
 
       <Text style={styles.subtitle}>
-        Reactions and replies to your snitch alerts 👀
+        Reactions and replies to your snitch alerts
       </Text>
 
       <ScrollView
@@ -108,10 +108,9 @@ export default function ReactionsScreen() {
           </View>
         ) : (
           reactions.map((reaction) => (
-            <TouchableOpacity
+            <View
               key={reaction.id}
               style={styles.reactionCard}
-              activeOpacity={0.9}
             >
               <View style={styles.topRow}>
                 <Text style={styles.friendName}>
@@ -126,7 +125,7 @@ export default function ReactionsScreen() {
               <Text style={styles.message}>
                 replied{" "}
                 <Text style={styles.bold}>
-                  "{reaction.message}"
+                  "{reaction.message || "sent a reaction"}"
                 </Text>{" "}
                 to your{" "}
                 <Text style={styles.bold}>
@@ -137,10 +136,62 @@ export default function ReactionsScreen() {
                   {reaction.place}
                 </Text>
               </Text>
-            </TouchableOpacity>
+
+              {/* DEMO PHOTO REACTION FOR SOPHIE */}
+
+              {reaction.fromUser?.toLowerCase() === "sophie" && (
+                <TouchableOpacity
+                  style={styles.photoButton}
+                  activeOpacity={0.9}
+                  onPress={() => setShowMeme(true)}
+                >
+                  <Ionicons
+                    name="image-outline"
+                    size={18}
+                    color="#4F772D"
+                  />
+
+                  <Text style={styles.photoButtonText}>
+                    Tap to view photo
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           ))
         )}
       </ScrollView>
+
+      <Modal
+        visible={showMeme}
+        transparent
+        animationType="fade"
+      >
+        <View style={styles.modalBackground}>
+          <TouchableOpacity
+            style={styles.closeOverlay}
+            activeOpacity={1}
+            onPress={() => setShowMeme(false)}
+          />
+
+          <Image
+            source={require("../../assets/meme.png")}
+            style={styles.fullscreenImage}
+            resizeMode="contain"
+          />
+
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setShowMeme(false)}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="close"
+              size={28}
+              color="#FFFFFF"
+            />
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -221,6 +272,24 @@ const styles = StyleSheet.create({
     color: "#4F772D",
   },
 
+  photoButton: {
+    marginTop: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#F3FFE1",
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    alignSelf: "flex-start",
+  },
+
+  photoButtonText: {
+    color: "#4F772D",
+    fontWeight: "700",
+    fontSize: 14,
+  },
+
   emptyContainer: {
     marginTop: 80,
     alignItems: "center",
@@ -230,5 +299,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#6B7280",
     fontWeight: "600",
+  },
+
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.92)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  closeOverlay: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+  },
+
+  fullscreenImage: {
+    width: "92%",
+    height: "70%",
+    borderRadius: 16,
+  },
+
+  closeButton: {
+    position: "absolute",
+    top: 70,
+    right: 24,
   },
 });
