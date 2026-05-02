@@ -44,20 +44,20 @@ const data: Record<PeriodKey, typeof empty> = {
   week: {
     dateRange: "May 02 – May 08, 2026",
     leaderboard: [
-      { id: "po", name: "Priya Okonkwo", initials: "PO", bg: "#D9F7A9", fg: "#4F772D", streak: 6, goal: "Goal: No clothes buying", actual: "Under budget -2%" },
-      { id: "kw", name: "Kofi Williams", initials: "KW", bg: "#FFE08A", fg: "#8B6914", streak: 5, goal: "Goal: No UberEats", actual: "Under budget -5%" },
-      { id: "jk", name: "Jordan Kim", initials: "JK", bg: "#D9F7A9", fg: "#4F772D", streak: 4, goal: "Goal: 2 coffees/week", actual: "Under budget -8%" },
-      { id: "sr", name: "Sam Reeves", initials: "SR", bg: "#FFE08A", fg: "#8B6914", streak: 3, goal: "Goal: Pack lunch 5x/week", actual: "Under budget -12%" },
+      { id: "sr", name: "Sam Reeves", initials: "SR", bg: "#FFE08A", fg: "#8B6914", streak: 6, goal: "Goal: Pack lunch 5x/week", actual: "Under budget -12%" },
+      { id: "jk", name: "Jordan Kim", initials: "JK", bg: "#D9F7A9", fg: "#4F772D", streak: 5, goal: "Goal: 2 coffees/week", actual: "Under budget -8%" },
+      { id: "kw", name: "Kofi Williams", initials: "KW", bg: "#FFE08A", fg: "#8B6914", streak: 4, goal: "Goal: No UberEats", actual: "Under budget -5%" },
+      { id: "po", name: "Priya Okonkwo", initials: "PO", bg: "#D9F7A9", fg: "#4F772D", streak: 3, goal: "Goal: No clothes buying", actual: "Under budget -2%" },
       { id: "ml", name: "Mia Lawson", initials: "ML", bg: "#A9E34B", fg: "#fff", streak: 2, goal: "Goal: $150/week budget", actual: "Over budget +3%" },
       { id: "at", name: "Amara Touré", initials: "AT", bg: "#A9E34B", fg: "#fff", streak: 1, goal: "Goal: Save $30/day", actual: "Over budget +18%" },
-      { id: "ml", name: "Mia Lawson", initials: "ML", bg: "#A9E34B", fg: "#fff", streak: 0, goal: "Goal: $150/week budget", actual: "Over budget +45%", brokeDate: "May 01", brokeReason: "Weekend shopping spree" },
-      { id: "at", name: "Amara Touré", initials: "AT", bg: "#A9E34B", fg: "#fff", streak: 0, goal: "Goal: Save $30/day", actual: "Over budget +62%", brokeDate: "May 01", brokeReason: "Impulse dinner dates" },
+      { id: "ln", name: "Leila Nasser", initials: "LN", bg: "#A9E34B", fg: "#fff", streak: 0, goal: "Goal: $25 alcohol budget", actual: "Over budget +35%", brokeDate: "May 02", brokeReason: "Girls night got out of hand" },
+      { id: "me", name: "Nikita", initials: "NK", bg: "#D9F7A9", fg: "#4F772D", streak: 0, goal: "Goal: 2 coffees/week", actual: "Over budget +48%", brokeDate: "May 02", brokeReason: "Stress-bought lattes all week" },
     ],
     punishments: [
-      { id: "p1", label: "Sing 'Baby Shark' in a public place for 30 seconds", votes: 9, target: "ml", status: "pending" },
-      { id: "p2", label: "Post a selfie with a silly face as your profile pic for 24h", votes: 11, target: "ml", status: "pending" },
-      { id: "p3", label: "Text your crush 'are you a parking ticket because you have FINE written all over you' 😅", votes: 15, target: "at", status: "pending" },
-      { id: "p4", label: "Wear mismatched socks to work for a whole week", votes: 12, target: "at", status: "pending" },
+      { id: "p1", label: "Sing 'Baby Shark' in a public place for 30 seconds", votes: 9, target: "ln", status: "pending" },
+      { id: "p2", label: "Post a selfie with a silly face as your profile pic for 24h", votes: 11, target: "ln", status: "pending" },
+      { id: "p3", label: "Text your crush 'are you a parking ticket because you have FINE written all over you' 😅", votes: 15, target: "me", status: "pending" },
+      { id: "p4", label: "Wear mismatched socks to work for a whole week", votes: 12, target: "me", status: "pending" },
     ],
   },
 
@@ -122,28 +122,19 @@ export default function LeaderboardScreen() {
 
   const sorted = useMemo(() => {
     const list = [...(current.leaderboard ?? [])];
-    // Sort by performance: most under budget first, then by streak for ties
     return list.sort((a, b) => {
-      // Extract percentage from strings like "Under budget -5%" or "Over budget +3%"
-      const aMatch = a.actual.match(/([+-]?\d+)%/);
-      const bMatch = b.actual.match(/([+-]?\d+)%/);
-      
-      const aPercent = aMatch ? parseInt(aMatch[1]) : 0;
-      const bPercent = bMatch ? parseInt(bMatch[1]) : 0;
-      
-      // Lower (more negative) percentage is better, so subtract instead of normal sort
-      if (aPercent !== bPercent) {
-        return aPercent - bPercent; // Most negative (under budget) comes first
-      }
-      
-      // If same percentage, sort by streak
-      return b.streak - a.streak;
+      const aMatch = a.actual.match(/([+-]?\d+)/);
+      const bMatch = b.actual.match(/([+-]?\d+)/);
+
+      const aNum = aMatch ? parseInt(aMatch[1]) : 0;
+      const bNum = bMatch ? parseInt(bMatch[1]) : 0;
+
+      return aNum - bNum;
     });
   }, [current]);
 
   const top = sorted.slice(0, 3);
 
-  // Group punishments by target player
   const groupedPunishments = useMemo(() => {
     const map: Record<string, Punishment[]> = {};
     (current.punishments ?? []).forEach((p) => {
@@ -245,11 +236,6 @@ export default function LeaderboardScreen() {
       <View style={styles.leaderboardList}>
         {sorted.map((p, i) => {
           const isLowest = lowestTwoIds.includes(p.id);
-          let placement = "";
-          if (i === 0) placement = "1st place";
-          else if (i === 1) placement = "2nd place";
-          else if (i === 2) placement = "3rd place";
-          else placement = `${i + 1}th place`;
 
           return (
             <View
@@ -291,7 +277,7 @@ export default function LeaderboardScreen() {
           {Object.entries(groupedPunishments).map(([targetId, punishments]) => {
             const player = playerMetadata[targetId];
             const punCount = punishments.length;
-            
+
             return (
               <View key={targetId} style={styles.punPlayerGroup}>
                 {/* Player header */}
@@ -312,7 +298,6 @@ export default function LeaderboardScreen() {
                 <View style={styles.punOptions}>
                   {punishments.map((pun) => {
                     const voted = isVoted(pun.id);
-                    const displayVotes = voted ? pun.votes + 1 : pun.votes;
 
                     return (
                       <View key={pun.id} style={styles.punCard}>
@@ -322,7 +307,7 @@ export default function LeaderboardScreen() {
 
                         {period === "week" ? (
                           <>
-                            <Text style={styles.punVotes}>{displayVotes}</Text>
+                            <Text style={styles.punVotes}>{pun.votes}</Text>
                             <TouchableOpacity
                               onPress={() => toggleVote(pun.id)}
                               style={[styles.punVoteBtn, voted && styles.punVoteBtnVoted]}
@@ -352,6 +337,8 @@ export default function LeaderboardScreen() {
     </ScrollView>
   );
 }
+
+/* ---------------- SMALL COMPONENTS ---------------- */
 
 const Avatar = ({ p, size }: any) => (
   <View
@@ -409,8 +396,6 @@ const styles = StyleSheet.create({
   podMeta: { marginTop: 12, marginBottom: 16, alignItems: "center" },
   podName: { fontSize: 16, fontWeight: "600", marginBottom: 2, color: "#2E1F3E" },
   podSub: { fontSize: 14, color: "#8E7DBE" },
-  podLabel: { fontSize: 12, color: "#8E7DBE", fontWeight: "400" },
-  podGoal: { fontSize: 11, color: "#8E7DBE", marginTop: 2, fontStyle: "italic" },
   podActual: { fontSize: 11, color: "#F6C1A6", marginTop: 1, fontWeight: "600" },
 
   avatar: {
