@@ -92,9 +92,9 @@ export default function HomeScreen() {
           <TouchableOpacity
             style={styles.settingsButton}
             activeOpacity={0.8}
-            onPress={() => router.push("/settings")}
+            onPress={() => router.push("/reactions")}
           >
-            <Ionicons name="settings-outline" size={22} color="#4F772D" />
+            <Ionicons name="chatbubble-ellipses-outline" size={22} color="#4F772D" />
           </TouchableOpacity>
         </View>
 
