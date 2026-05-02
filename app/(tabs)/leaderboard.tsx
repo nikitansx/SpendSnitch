@@ -358,7 +358,7 @@ const Avatar = ({ p, size }: any) => (
 const styles = StyleSheet.create({
   page: { backgroundColor: "#F3FFE1", padding: 24 },
 
-  header: { marginBottom: 12 },
+  header: { marginBottom: 12, paddingTop: 16 },
   title: { fontSize: 34, fontWeight: "700", color: "#2E1F3E" },
   italic: { fontStyle: "italic", color: "#8E7DBE" },
   date: { fontSize: 13, color: "#8E7DBE", marginTop: 4 },
