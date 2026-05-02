@@ -425,15 +425,11 @@ const loginUser = async () => {
         style={styles.bankButton}
         onPress={uploadCSV}
       >
-        <Text style={styles.bankButtonText}>
-<<<<<<< HEAD
-          {csvName ? `Uploaded: ${csvName}` : "Connect Bank"}
-=======
-          {csvName
-            ? `Uploaded: ${csvName}`
-            : "Upload mock bank CSV"}
->>>>>>> a4a8b1b (Connected database, signup/login, friend requests, and reactions)
-        </Text>
+<Text style={styles.bankButtonText}>
+  {csvName
+    ? `Uploaded: ${csvName}`
+    : "Upload mock bank CSV"}
+</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
