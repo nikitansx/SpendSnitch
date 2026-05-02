@@ -264,10 +264,6 @@ const changeBankCSV = async () => {
         </Text>
       )}
 
-      <TouchableOpacity style={styles.reloadButton} onPress={loadData}>
-        <Text style={styles.reloadButtonText}>Refresh budgets</Text>
-      </TouchableOpacity>
-
       <Modal visible={settingsOpen} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
