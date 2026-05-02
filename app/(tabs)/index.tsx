@@ -1,7 +1,10 @@
-import React, { useState } from "react";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import React, { useEffect, useState } from "react";
+
 
 import {
+  Alert,
+  Image,
   Modal,
   ScrollView,
   StyleSheet,
@@ -9,8 +12,6 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  Alert,
-  Image,
 } from "react-native";
 
 import { router } from "expo-router";
@@ -31,6 +32,7 @@ export default function HomeScreen() {
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
   const [customMessage, setCustomMessage] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [loggedInUser, setLoggedInUser] = useState("");
 
   const alerts = [
     {
@@ -57,14 +59,6 @@ export default function HomeScreen() {
       place: "Event Cinemas",
       time: "25 mins ago",
     },
-    {
-      id: 4,
-      username: "@sophie",
-      category: "Coffee",
-      amount: "$32",
-      place: "Starbucks",
-      time: "1 hour ago",
-    },
   ];
 
   const quickMessages = [
@@ -74,6 +68,30 @@ export default function HomeScreen() {
     "That was NOT in the budget",
     "Iconic purchase",
   ];
+  useEffect(() => {
+  const loadLoggedInUser = async () => {
+    const user = await AsyncStorage.getItem("loggedInUser");
+
+    if (user) {
+      setLoggedInUser(user.toLowerCase().trim());
+    }
+  };
+
+  loadLoggedInUser();
+}, []);
+
+const visibleAlerts = alerts.filter((alert) => {
+  const alertUsername = alert.username
+    .replace("@", "")
+    .toLowerCase()
+    .trim();
+
+  if (loggedInUser === "mia") {
+    return alertUsername !== "mia";
+  }
+
+  return true;
+});
 
   const resetModal = () => {
     setSelectedAlert(null);
@@ -198,14 +216,18 @@ export default function HomeScreen() {
         style={styles.container}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.headerRow}>
-          <Text style={styles.logo}>Spend Snitch</Text>
+      <View style={styles.headerRow}>
+        <Image
+          source={require("../../assets/images/spendsnitch.png")}
+          style={styles.logoImage}
+          resizeMode="contain"
+        />
 
-          <TouchableOpacity
-            style={styles.settingsButton}
-            activeOpacity={0.8}
-            onPress={() => router.push("/reactions")}
-          >
+        <TouchableOpacity
+          style={styles.settingsButton}
+          activeOpacity={0.8}
+          onPress={() => router.push("/reactions")}
+        >
             <Ionicons
               name="chatbubble-ellipses-outline"
               size={22}
@@ -218,7 +240,7 @@ export default function HomeScreen() {
           Recent snitch alerts from your friends
         </Text>
 
-        {alerts.map((alert) => (
+        {visibleAlerts.map((alert) => (
           <TouchableOpacity
             key={alert.id}
             style={styles.alertCard}
@@ -366,11 +388,18 @@ const styles = StyleSheet.create({
     padding: 24,
   },
 
+logoImage: {
+  width: 350,
+  height: 150,
+  alignSelf: "flex-start",
+  marginLeft: -70,
+},
+
   headerRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 60,
+    justifyContent: "space-between",
+    marginTop: 10,
   },
 
   logo: {
@@ -432,7 +461,7 @@ const styles = StyleSheet.create({
 
   bold: {
     fontWeight: "700",
-    color: "#4F772D",
+    color: "#8E7DBE",
   },
 
   modalBackground: {
@@ -511,13 +540,13 @@ const styles = StyleSheet.create({
   },
 
   sendButton: {
-    backgroundColor: "#4F772D",
+    backgroundColor: "#8E7DBE",
     padding: 15,
     borderRadius: 12,
     marginTop: 16,
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "#4F772D",
+    borderColor: "#8E7DBE",
   },
 
   sendButtonText: {

@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
   Image,
   Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
 
   bold: {
     fontWeight: "700",
-    color: "#4F772D",
+    color: "#8E7DBE",
   },
 
   photoButton: {
