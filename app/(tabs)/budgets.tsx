@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as DocumentPicker from "expo-document-picker";
 import React, { useEffect, useState } from "react";
 import {
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -18,7 +19,15 @@ export default function BudgetsScreen() {
     Travel: "0",
     Entertainment: "0",
   });
+
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [privacyKeywords, setPrivacyKeywords] = useState<string[]>([
+    "Pharmacy",
+    "Medical",
+    "Health",
+  ]);
+  const [customKeyword, setCustomKeyword] = useState("");
 
   useEffect(() => {
     loadData();
@@ -32,7 +41,26 @@ export default function BudgetsScreen() {
       setGoal(data.goal || "");
       setBudgets(data.budgets || budgets);
       setTransactions(data.transactions || []);
+      setPrivacyKeywords(data.privacyKeywords || ["Pharmacy", "Medical", "Health"]);
     }
+  };
+
+  const saveUserData = async (updates: any) => {
+    const saved = await AsyncStorage.getItem("spendSnitchUserData");
+    const oldData = saved ? JSON.parse(saved) : {};
+
+    await AsyncStorage.setItem(
+      "spendSnitchUserData",
+      JSON.stringify({
+        ...oldData,
+        ...updates,
+      })
+    );
+  };
+
+  const updateGoal = async (value: string) => {
+    setGoal(value);
+    await saveUserData({ goal: value });
   };
 
   const updateBudget = async (category: string, value: string) => {
@@ -42,23 +70,7 @@ export default function BudgetsScreen() {
     };
 
     setBudgets(updatedBudgets);
-
-    const saved = await AsyncStorage.getItem("spendSnitchUserData");
-    const oldData = saved ? JSON.parse(saved) : {};
-
-    await AsyncStorage.setItem(
-      "spendSnitchUserData",
-      JSON.stringify({
-        ...oldData,
-        budgets: updatedBudgets,
-      })
-    );
-  };
-
-  const getSpentByCategory = (category: string) => {
-    return transactions
-      .filter((item) => item.category === category)
-      .reduce((total, item) => total + Number(item.cost), 0);
+    await saveUserData({ budgets: updatedBudgets });
   };
 
   const parseCSV = (text: string) => {
@@ -88,21 +100,51 @@ export default function BudgetsScreen() {
 
     const response = await fetch(file.uri);
     const text = await response.text();
-
     const parsed = parseCSV(text);
 
     setTransactions(parsed);
+    await saveUserData({ transactions: parsed });
+  };
 
-    const saved = await AsyncStorage.getItem("spendSnitchUserData");
-    const oldData = saved ? JSON.parse(saved) : {};
+  const addPrivacyKeyword = async () => {
+    if (customKeyword.trim() === "") return;
 
-    await AsyncStorage.setItem(
-      "spendSnitchUserData",
-      JSON.stringify({
-        ...oldData,
-        transactions: parsed,
-      })
-    );
+    const updated = [...privacyKeywords, customKeyword.trim()];
+    setPrivacyKeywords(updated);
+    setCustomKeyword("");
+
+    await saveUserData({ privacyKeywords: updated });
+  };
+
+  const removePrivacyKeyword = async (keyword: string) => {
+    const updated = privacyKeywords.filter((item) => item !== keyword);
+    setPrivacyKeywords(updated);
+
+    await saveUserData({ privacyKeywords: updated });
+  };
+
+  const isPrivateTransaction = (transaction: any) => {
+    const item = transaction.item.toLowerCase();
+    const category = transaction.category.toLowerCase();
+
+    return privacyKeywords.some((keyword) => {
+      const lowerKeyword = keyword.toLowerCase();
+      return item.includes(lowerKeyword) || category.includes(lowerKeyword);
+    });
+  };
+
+  const visibleTransactions = transactions.filter(
+    (transaction) => !isPrivateTransaction(transaction)
+  );
+
+  const hiddenTransactions = transactions.filter((transaction) =>
+    isPrivateTransaction(transaction)
+  );
+
+  const getSpentByCategory = (category: string) => {
+    return visibleTransactions
+      .filter((item) => item.category === category)
+      .reduce((total, item) => total + Number(item.cost), 0);
   };
 
   const categories = ["Food", "Shopping", "Travel", "Entertainment"];
@@ -111,36 +153,23 @@ export default function BudgetsScreen() {
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Your Budgets</Text>
 
-    <View style={styles.goalCard}>
-      <Text style={styles.goalLabel}>Main budgeting goal</Text>
+      <View style={styles.goalCard}>
+        <Text style={styles.goalLabel}>Main budgeting goal</Text>
 
-      <TextInput
-        style={styles.goalInput}
-        value={goal}
-        placeholder="No goal added yet"
-        placeholderTextColor="#9CA3AF"
-        onChangeText={async (value) => {
-          setGoal(value);
-
-          const saved = await AsyncStorage.getItem("spendSnitchUserData");
-          const oldData = saved ? JSON.parse(saved) : {};
-
-          await AsyncStorage.setItem(
-            "spendSnitchUserData",
-            JSON.stringify({
-              ...oldData,
-              goal: value,
-            })
-          );
-        }}
-      />
-    </View>
+        <TextInput
+          style={styles.goalInput}
+          value={goal}
+          placeholder="No goal added yet"
+          placeholderTextColor="#9CA3AF"
+          onChangeText={updateGoal}
+        />
+      </View>
 
       <TouchableOpacity
-        style={styles.changeBankButton}
-        onPress={changeBankCSV}
+        style={styles.settingsButton}
+        onPress={() => setSettingsOpen(true)}
       >
-        <Text style={styles.changeBankText}>Change linked bank</Text>
+        <Text style={styles.settingsButtonText}>Bank & Privacy Settings</Text>
       </TouchableOpacity>
 
       <Text style={styles.sectionTitle}>Weekly allowances</Text>
@@ -186,26 +215,22 @@ export default function BudgetsScreen() {
 
             {overBudget && (
               <Text style={styles.warning}>
-                You've been snitched on: you went over your {category} budget 👀
+                Snitch alert sent: you went over your {category} budget 👀
               </Text>
             )}
           </View>
         );
       })}
 
-      <Text style={styles.sectionTitle}>Bank transactions</Text>
+      <Text style={styles.sectionTitle}>Visible bank transactions</Text>
 
-      {transactions.length === 0 ? (
-        <Text style={styles.emptyText}>
-          No CSV uploaded yet.
-        </Text>
+      {visibleTransactions.length === 0 ? (
+        <Text style={styles.emptyText}>No visible transactions yet.</Text>
       ) : (
-        transactions.map((transaction) => (
+        visibleTransactions.map((transaction) => (
           <View key={transaction.id} style={styles.transactionCard}>
             <View>
-              <Text style={styles.transactionItem}>
-                {transaction.item}
-              </Text>
+              <Text style={styles.transactionItem}>{transaction.item}</Text>
               <Text style={styles.transactionCategory}>
                 {transaction.category}
               </Text>
@@ -218,12 +243,84 @@ export default function BudgetsScreen() {
         ))
       )}
 
-      <TouchableOpacity
-        style={styles.reloadButton}
-        onPress={loadData}
-      >
+      {hiddenTransactions.length > 0 && (
+        <Text style={styles.privateNote}>
+          {hiddenTransactions.length} private transaction(s) hidden by your privacy
+          filters.
+        </Text>
+      )}
+
+      <TouchableOpacity style={styles.reloadButton} onPress={loadData}>
         <Text style={styles.reloadButtonText}>Refresh budgets</Text>
       </TouchableOpacity>
+
+      <Modal visible={settingsOpen} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <ScrollView>
+              <Text style={styles.modalTitle}>Bank & Privacy Settings</Text>
+
+              <Text style={styles.modalSubtitle}>
+                Control your linked bank data and hide sensitive transactions
+                from snitch alerts and shared reports.
+              </Text>
+
+              <Text style={styles.modalSectionTitle}>Linked bank</Text>
+
+              <TouchableOpacity style={styles.bankButton} onPress={changeBankCSV}>
+                <Text style={styles.bankButtonText}>Change Bank</Text>
+              </TouchableOpacity>
+
+              <Text style={styles.modalSectionTitle}>Privacy filters</Text>
+
+              <Text style={styles.modalSubtitle}>
+                Transactions containing these words will be hidden.
+              </Text>
+
+              {privacyKeywords.map((keyword) => (
+                <View key={keyword} style={styles.keywordRow}>
+                  <Text style={styles.keywordText}>{keyword}</Text>
+
+                  <TouchableOpacity onPress={() => removePrivacyKeyword(keyword)}>
+                    <Text style={styles.removeText}>Remove</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+
+              <View style={styles.addKeywordRow}>
+                <TextInput
+                  style={styles.keywordInput}
+                  placeholder="Add keyword e.g. Pharmacy"
+                  placeholderTextColor="#9CA3AF"
+                  value={customKeyword}
+                  onChangeText={setCustomKeyword}
+                />
+
+                <TouchableOpacity
+                  style={styles.addButton}
+                  onPress={addPrivacyKeyword}
+                >
+                  <Text style={styles.addButtonText}>Add</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.privacyInfoBox}>
+                <Text style={styles.privacyInfoText}>
+                  Hidden transactions are not counted in public snitch alerts. This
+                  keeps accountability fun without exposing sensitive spending.
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setSettingsOpen(false)}
+              >
+                <Text style={styles.closeButtonText}>Done</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -250,26 +347,20 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
 
-  goalInput: {
-  color: "#111827",
-  fontSize: 22,
-  fontWeight: "bold",
-  padding: 0,
-  },
-
   goalLabel: {
     color: "#6B7280",
     fontSize: 14,
     marginBottom: 6,
   },
 
-  goalText: {
+  goalInput: {
     color: "#111827",
     fontSize: 22,
     fontWeight: "bold",
+    padding: 0,
   },
 
-  changeBankButton: {
+  settingsButton: {
     alignSelf: "flex-end",
     backgroundColor: "white",
     borderRadius: 14,
@@ -280,8 +371,8 @@ const styles = StyleSheet.create({
     borderColor: "#D9EBCB",
   },
 
-  changeBankText: {
-    color: "#7CB342",
+  settingsButtonText: {
+    color: "#8E7DBE",
     fontWeight: "600",
     fontSize: 13,
   },
@@ -401,8 +492,18 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
+  privateNote: {
+    color: "#6B7280",
+    backgroundColor: "white",
+    padding: 14,
+    borderRadius: 16,
+    marginTop: 4,
+    marginBottom: 16,
+    fontSize: 14,
+  },
+
   reloadButton: {
-    backgroundColor: "#7CB342",
+    backgroundColor: "#8E7DBE",
     padding: 16,
     borderRadius: 18,
     alignItems: "center",
@@ -411,6 +512,133 @@ const styles = StyleSheet.create({
   },
 
   reloadButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    justifyContent: "flex-end",
+  },
+
+  modalContent: {
+    backgroundColor: "#F3FFE1",
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    padding: 24,
+    maxHeight: "88%",
+  },
+
+  modalTitle: {
+    fontSize: 30,
+    fontWeight: "bold",
+    color: "#111827",
+    marginBottom: 10,
+  },
+
+  modalSubtitle: {
+    color: "#6B7280",
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+
+  modalSectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#111827",
+    marginTop: 10,
+    marginBottom: 12,
+  },
+
+  bankButton: {
+    backgroundColor: "white",
+    borderRadius: 18,
+    padding: 16,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#8E7DBE",
+    marginBottom: 18,
+  },
+
+  bankButtonText: {
+    color: "#8E7DBE",
+    fontWeight: "bold",
+    fontSize: 15,
+  },
+
+  keywordRow: {
+    backgroundColor: "white",
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  keywordText: {
+    color: "#111827",
+    fontWeight: "600",
+    fontSize: 15,
+  },
+
+  removeText: {
+    color: "#EF4444",
+    fontWeight: "bold",
+    fontSize: 13,
+  },
+
+  addKeywordRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 8,
+  },
+
+  keywordInput: {
+    flex: 1,
+    backgroundColor: "white",
+    borderRadius: 16,
+    padding: 14,
+    fontSize: 15,
+  },
+
+  addButton: {
+    backgroundColor: "#7CB342",
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    justifyContent: "center",
+  },
+
+  addButtonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+
+  privacyInfoBox: {
+    backgroundColor: "white",
+    borderRadius: 18,
+    padding: 16,
+    marginTop: 18,
+  },
+
+  privacyInfoText: {
+    color: "#6B7280",
+    lineHeight: 22,
+  },
+
+  closeButton: {
+    backgroundColor: "#8E7DBE",
+    padding: 16,
+    borderRadius: 18,
+    alignItems: "center",
+    marginTop: 20,
+    marginBottom: 20,
+  },
+
+  closeButtonText: {
     color: "white",
     fontWeight: "bold",
     fontSize: 16,

@@ -116,7 +116,7 @@ Keep it short, funny, supportive, and Gen Z friendly.
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>AI Snitch Coach</Text>
+      <Text style={styles.title}>AI Snitch Insights</Text>
 
       <Text style={styles.subtitle}>
         Let AI analyse your spending and expose your financial personality.
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    backgroundColor: "#7CB342",
+    backgroundColor: "#8E7DBE",
     padding: 18,
     borderRadius: 20,
     alignItems: "center",
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
   },
 
   shareButton: {
-    backgroundColor: "#111827",
+    backgroundColor: "#8E7DBE",
     padding: 16,
     borderRadius: 18,
     alignItems: "center",
